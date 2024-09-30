@@ -26,16 +26,16 @@ jobs:
 
       - name: Pull changes
         run: | 
-          cd ~/web-portfolio/
+          cd ~/cookin-up/
           git checkout master
           git reset --hard
           git pull origin master
 
       - name: Install & Build
         run: |
-          cd ~/web-portfolio/client
+          cd ~/cookin-up/client
           yarn install
           yarn run build
   
       - name: Deploy
-        run: sudo cp -r ~/web-portfolio/client/dist/* /var/www/web-portfolio-client/
+        run: sudo cp -r ~/cookin-up/client/dist/* /var/www/cookin-up-client/

@@ -23,17 +23,17 @@ jobs:
 
       - name: Pull changes
         run: | 
-          cd ~/web-portfolio/
+          cd ~/cookin-up/
           git checkout master
           git reset --hard
           git pull origin master
 
       - name: Build
         run: |
-          cd ~/web-portfolio/server
+          cd ~/cookin-up/server
           rm -rf ./publish
           dotnet publish -c Release -o ./publish
       - name: Deploy
         run: |
-          sudo cp -r ~/web-portfolio/server/publish/* /var/www/web-portfolio-server/
-          sudo systemctl restart web-portfolio-server.service
+          sudo cp -r ~/cookin-up/server/publish/* /var/www/cookin-up-server/
+          sudo systemctl restart cookin-up-server.service
