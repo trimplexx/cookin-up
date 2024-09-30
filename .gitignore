@@ -1,0 +1,39 @@
+# Ignore logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Ignore node_modules and dist in client
+node_modules
+client/dist
+client/dist-ssr
+client/*.local
+
+# Ignore editor directories and files in client
+client/.idea
+client/.DS_Store
+client/*.suo
+client/*.ntvs*
+client/*.njsproj
+client/*.sln
+client/*.sw?
+
+# Ignore build output in server
+bin/
+obj/
+server/bin/
+server/obj/
+
+# Ignore other files
+.DS_Store
+.idea/
+*.userosscache
+*.sln.docstates
+".vs/" 
+.vs/
+
+".vs/" 
