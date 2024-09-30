@@ -1,0 +1,41 @@
+name: Client workflow
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - ".github/workflows/client.yml"
+      - "package.json"
+      - "client/**"
+
+jobs:
+  deploy-client:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Pull changes
+        run: | 
+          cd ~/web-portfolio/
+          git checkout master
+          git reset --hard
+          git pull origin master
+
+      - name: Install & Build
+        run: |
+          cd ~/web-portfolio/client
+          yarn install
+          yarn run build
+  
+      - name: Deploy
+        run: sudo cp -r ~/web-portfolio/client/dist/* /var/www/web-portfolio-client/

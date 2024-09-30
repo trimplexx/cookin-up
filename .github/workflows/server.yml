@@ -1,0 +1,39 @@
+name: Server workflow
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - ".github/workflows/server.yml"
+      - "package.json"
+      - "server/**"
+
+jobs:
+  deploy-server:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install .NET Core SDK
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Pull changes
+        run: | 
+          cd ~/web-portfolio/
+          git checkout master
+          git reset --hard
+          git pull origin master
+
+      - name: Build
+        run: |
+          cd ~/web-portfolio/server
+          rm -rf ./publish
+          dotnet publish -c Release -o ./publish
+      - name: Deploy
+        run: |
+          sudo cp -r ~/web-portfolio/server/publish/* /var/www/web-portfolio-server/
+          sudo systemctl restart web-portfolio-server.service
