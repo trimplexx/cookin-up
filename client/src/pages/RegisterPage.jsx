@@ -10,9 +10,9 @@ const RegisterPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   return (
-    <div className="w-full">
+    <div className="w-full p-4 ">
       <div className="h-full flex items-center justify-center">
-        <div className="bg-white dark:bg-neutral-800 p-10 rounded-lg shadow-lg max-w-lg w-full transform transition duration-200 hover:shadow-2xl">
+        <div className="bg-white dark:bg-neutral-800 sm:px-10 px-6 py-10  rounded-lg shadow-lg max-w-lg w-full transform transition duration-200 hover:shadow-2xl">
           <h2 className="text-3xl font-extrabold text-center text-emerald-600 dark:text-emerald-300 mb-6">
             Zarejestruj się
           </h2>
