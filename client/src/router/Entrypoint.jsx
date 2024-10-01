@@ -7,15 +7,19 @@ import { Suspense } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import SuspenseLoader from '../components/SuspenseLoader';
 import { AppRouter } from './AppRouter';
+import Navbar from '../components/Navbar';
 
 const Entrypoint = () => (
   <React.StrictMode>
     <Suspense fallback={<SuspenseLoader />}>
-      <BrowserRouter>
-        {/* Define here shared content upper outlet, ex header */}
-        <AppRouter />
-        {/* Define here shared content below outlet, ex footer */}
-      </BrowserRouter>
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <div className="flex-grow flex">
+          <BrowserRouter>
+            <AppRouter />
+          </BrowserRouter>
+        </div>
+      </div>
     </Suspense>
   </React.StrictMode>
 );
