@@ -21,7 +21,7 @@ const useDarkMode = () => {
       } else {
         htmlElement.classList.remove('dark');
         if (themeColorMetaTag) {
-          themeColorMetaTag.setAttribute('content', '#86efac');
+          themeColorMetaTag.setAttribute('content', '#6ee7b7');
         }
       }
     };
