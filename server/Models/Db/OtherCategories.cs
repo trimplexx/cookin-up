@@ -1,8 +1,7 @@
-﻿namespace server.Models.Db
+﻿namespace server.Models.Db;
+
+public class OtherCategories
 {
-    public class OtherCategories
-    {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-    }
+    public int Id { get; set; }
+    public string? Name { get; set; }
 }

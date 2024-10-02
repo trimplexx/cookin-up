@@ -1,14 +1,16 @@
 ﻿using server.Interfaces;
+using server.Models.DTOs;
 using server.Services;
 
-namespace server.Static
+namespace server.Static;
+
+public static class ServiceRegistration
 {
-    public static class ServiceRegistration
+    public static void AddApplicationServices(this IServiceCollection services)
     {
-        public static void AddApplicationServices(this IServiceCollection services)
-        {
-            // Rejestracja serwisów
-            services.AddScoped<IUserService, UserService>();
-        }
+        // Rejestracja serwisów
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ILobbyService, LobbyService>();
+        services.AddScoped<ICookingDayService, CookingDayService>();
     }
 }
