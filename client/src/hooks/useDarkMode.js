@@ -9,14 +9,23 @@ const useDarkMode = () => {
   useEffect(() => {
     const setDarkModeClass = (isDarkMode) => {
       const htmlElement = document.querySelector('html');
+      const themeColorMetaTag = document.querySelector(
+        'meta[name="theme-color"]'
+      );
+
       if (isDarkMode) {
-        htmlElement.classList.remove('light');
         htmlElement.classList.add('dark');
+        if (themeColorMetaTag) {
+          themeColorMetaTag.setAttribute('content', '#064e3b');
+        }
       } else {
         htmlElement.classList.remove('dark');
-        htmlElement.classList.add('light');
+        if (themeColorMetaTag) {
+          themeColorMetaTag.setAttribute('content', '#86efac');
+        }
       }
     };
+
     setDarkModeClass(darkMode);
     localStorage.setItem('darkMode', darkMode);
   }, [darkMode]);
