@@ -10,9 +10,11 @@ const useDarkMode = () => {
     const setDarkModeClass = (isDarkMode) => {
       const htmlElement = document.querySelector('html');
       if (isDarkMode) {
+        htmlElement.classList.remove('light');
         htmlElement.classList.add('dark');
       } else {
         htmlElement.classList.remove('dark');
+        htmlElement.classList.add('light');
       }
     };
     setDarkModeClass(darkMode);
