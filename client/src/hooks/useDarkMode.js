@@ -1,13 +1,21 @@
-
 import { useEffect, useState } from 'react';
 
 const useDarkMode = () => {
   const [darkMode, setDarkMode] = useState(() => {
-    return JSON.parse(window.localStorage.getItem('darkMode')) || false;
+    const savedMode = JSON.parse(window.localStorage.getItem('darkMode'));
+
+    if (savedMode !== null) {
+      return savedMode;
+    } else {
+      return (
+        window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches
+      );
+    }
   });
 
   useEffect(() => {
-    const setDarkModeClass = isDarkMode => {
+    const setDarkModeClass = (isDarkMode) => {
       const htmlElement = document.querySelector('html');
       if (isDarkMode) {
         htmlElement.classList.add('dark');

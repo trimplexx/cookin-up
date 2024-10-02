@@ -1,7 +1,3 @@
-/*
- * Formatted file
- */
-
 import DarkModeButton from '../components/DarkModeButton';
 
 const Navbar = () => {
