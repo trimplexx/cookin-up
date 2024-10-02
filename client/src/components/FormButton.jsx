@@ -18,8 +18,4 @@ FormButton.propTypes = {
   type: PropTypes.string,
 };
 
-FormButton.defaultProps = {
-  type: 'submit',
-};
-
 export default FormButton;

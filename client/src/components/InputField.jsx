@@ -57,9 +57,4 @@ InputField.propTypes = {
   isPassword: PropTypes.bool,
 };
 
-InputField.defaultProps = {
-  type: 'text',
-  isPassword: false,
-};
-
 export default InputField;

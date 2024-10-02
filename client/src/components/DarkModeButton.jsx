@@ -1,28 +1,11 @@
-import { useEffect, useState } from 'react';
 import { MdNightlightRound, MdOutlineWbSunny } from 'react-icons/md';
+import useDarkMode from '../hooks/useDarkMode';
 
 const DarkModeButton = () => {
-  // Odczytujemy stan trybu ciemnego z localStorage podczas inicjalizacji komponentu
-  const [darkMode, setDarkMode] = useState(() => {
-    const savedMode = localStorage.getItem('darkMode');
-    return savedMode === 'true';
-  });
-
-  useEffect(() => {
-    const setDarkModeClass = (isDarkMode) => {
-      const htmlElement = document.querySelector('html');
-      if (isDarkMode) {
-        htmlElement.classList.add('dark');
-      } else {
-        htmlElement.classList.remove('dark');
-      }
-    };
-    setDarkModeClass(darkMode);
-    localStorage.setItem('darkMode', darkMode);
-  }, [darkMode]);
+  const [darkMode, setDarkMode] = useDarkMode();
 
   const toggleDarkMode = () => {
-    setDarkMode((prevMode) => !prevMode);
+    setDarkMode(!darkMode);
   };
 
   return (
