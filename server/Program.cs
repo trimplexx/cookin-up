@@ -30,7 +30,7 @@ builder.Services.AddDbContext<CookinUpDbContext>(
     option => option.UseMySql(configuration, ServerVersion.AutoDetect(configuration))
 );
 
-JwtTokenClass.secretKey = builder.Configuration["jwtKey"] ?? builder.Configuration["jwtStaticKey"];
+JwtTokenClass.SecretKey = builder.Configuration["jwtKey"] ?? builder.Configuration["jwtStaticKey"];
 
 var app = builder.Build();
 

@@ -7,38 +7,43 @@ namespace server.Static;
 
 public static class JwtTokenClass
 {
-    public static string secretKey;
+    public static string? SecretKey;
 
     public static bool ValidateToken(string token, CookinUpDbContext context)
     {
         if (string.IsNullOrWhiteSpace(token)) return false;
 
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-
-        var isRevoked = context.RevokedTokens.Any(rt => rt.Token == token);
-        if (isRevoked) return false;
-
-        var tokenValidationParameters = new TokenValidationParameters
+        if (SecretKey != null)
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = key,
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
 
-        try
-        {
-            tokenHandler.ValidateToken(token, tokenValidationParameters, out _);
-            return true;
+            var isRevoked = context.RevokedTokens.Any(rt => rt.Token == token);
+            if (isRevoked) return false;
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                tokenHandler.ValidateToken(token, tokenValidationParameters, out _);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
-        catch
-        {
-            return false;
-        }
+        return false;
     }
+    
 
     public static int ExtractUserIdFromToken(string token)
     {

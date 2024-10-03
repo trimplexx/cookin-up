@@ -1,11 +1,33 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import InputField from '../components/InputField';
-import FormButton from '../components/FormButton';
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import InputField from "../components/InputField";
+import FormButton from "../components/FormButton";
+import { login } from "../api/usersApi";
+import { toast } from "react-hot-toast";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      setIsLoading(true);
+      const result = await login(email, password);
+
+      if (result) {
+        toast.success("Logowanie powiodło się");
+        localStorage.setItem("jwtToken", result);
+        window.location.href = "/";
+      }
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="w-full p-4">
@@ -14,7 +36,7 @@ const LoginPage = () => {
           <h2 className="text-3xl font-extrabold text-center text-emerald-600 dark:text-emerald-300 mb-6">
             Zaloguj się
           </h2>
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleLogin}>
             <InputField
               id="email"
               label="Email"
@@ -32,17 +54,21 @@ const LoginPage = () => {
               isPassword={true}
             />
             <div className="flex justify-between items-center mb-6">
-              <FormButton label="Zaloguj się" />
+              <FormButton
+                label={isLoading ? "Przetwarzanie..." : "Zaloguj się"}
+                type="submit"
+                isLoading={isLoading} // Obsługa ładowania
+              />
             </div>
           </form>
           <p className="text-center text-gray-600 dark:text-gray-400 mt-4">
-            Nie masz konta?{' '}
-            <Link
+            Nie masz konta?{" "}
+            <NavLink
               to="/rejestracja"
               className="text-emerald-600 dark:text-emerald-300 hover:underline transition-colors"
             >
               Zarejestruj się
-            </Link>
+            </NavLink>
           </p>
         </div>
       </div>

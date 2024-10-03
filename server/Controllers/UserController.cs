@@ -22,10 +22,25 @@ public class UserController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDto userRegisterDto)
     {
-        var result = await _userService.Register(userRegisterDto);
-        if (!result) return BadRequest("Użytkownik z takim emailem już istnieje.");
-        return Ok("Rejestracja powiodła się.");
+        try
+        {
+            var result = await _userService.Register(userRegisterDto);
+            if (!result)
+            {
+                return Conflict("Użytkownik z takim emailem już istnieje.");
+            }
+            return Ok("Rejestracja powiodła się.");
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Wystąpił błąd serwera: {ex.Message}");
+        }
     }
+
 
     [HttpPost("login")]
     public async Task<IActionResult> Login(UserLoginDto userLoginDto)

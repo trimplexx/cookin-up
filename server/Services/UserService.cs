@@ -9,6 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace server.Services;
 
@@ -26,25 +27,46 @@ public class UserService : IUserService
 
     public async Task<bool> Register(UserRegisterDto userRegisterDto)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == userRegisterDto.Email)) return false;
-
-
+        if (string.IsNullOrWhiteSpace(userRegisterDto.Name) || 
+            string.IsNullOrWhiteSpace(userRegisterDto.Email) || 
+            string.IsNullOrWhiteSpace(userRegisterDto.Password))
+        {
+            throw new ArgumentException("Wszystkie pola muszą być wypełnione.");
+        }
+        
+        var emailRegex = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+        if (!Regex.IsMatch(userRegisterDto.Email, emailRegex))
+        {
+            throw new ArgumentException("Niepoprawny format emaila.");
+        }
+        
+        var passwordRegex = @"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$";
+        if (!Regex.IsMatch(userRegisterDto.Password, passwordRegex))
+        {
+            throw new ArgumentException("Hasło musi zawierać co najmniej 8 znaków, jedną wielką literę, jedną cyfrę i jeden znak specjalny.");
+        }
+        
+        if (await _context.Users.AnyAsync(u => u.Email == userRegisterDto.Email))
+        {
+            return false;
+        }
+        
         var salt = GenerateSalt();
-
-
         var hashedPassword = HashPassword(userRegisterDto.Password, salt);
-
+        
         var user = new Users
         {
             Name = userRegisterDto.Name,
             Email = userRegisterDto.Email,
             Password = $"{Convert.ToBase64String(salt)}:{hashedPassword}"
         };
-
+        
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+
         return true;
     }
+
 
 
     public async Task<string?> Login(UserLoginDto userLoginDto)
@@ -87,7 +109,7 @@ public class UserService : IUserService
             new Claim("Name", user.Name)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtTokenClass.secretKey));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtTokenClass.SecretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expires = DateTime.UtcNow.AddDays(7);
 
