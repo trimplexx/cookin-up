@@ -28,6 +28,10 @@ public class LobbyController : ControllerBase
             await _lobbyService.CreateLobby(name, userId);
             return Ok();
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
         catch (Exception)
         {
             return StatusCode(500, "Wystąpił błąd tworzenia lobby");

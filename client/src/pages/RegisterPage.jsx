@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import FormButton from "../components/FormButton";
 import { register } from "../api/usersApi";
-import { toast } from "react-hot-toast"; // Import react-hot-toast
+import { toast } from "react-hot-toast";
 
 const RegisterPage = () => {
   const [nick, setNick] = useState("");
@@ -13,6 +13,13 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      navigate("/");
+    }
+  }, [navigate]);
 
   const handleRegister = async (e) => {
     e.preventDefault();

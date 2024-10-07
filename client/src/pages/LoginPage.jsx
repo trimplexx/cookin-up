@@ -4,8 +4,11 @@ import InputField from "../components/InputField";
 import FormButton from "../components/FormButton";
 import { login } from "../api/usersApi";
 import { toast } from "react-hot-toast";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +31,13 @@ const LoginPage = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      navigate("/");
+    }
+  }, [navigate]);
 
   return (
     <div className="w-full p-4">
@@ -57,7 +67,7 @@ const LoginPage = () => {
               <FormButton
                 label={isLoading ? "Przetwarzanie..." : "Zaloguj się"}
                 type="submit"
-                isLoading={isLoading} // Obsługa ładowania
+                isLoading={isLoading}
               />
             </div>
           </form>

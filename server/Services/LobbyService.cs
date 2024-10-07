@@ -25,6 +25,12 @@ public class LobbyService : ILobbyService
         if (lobbyName.Length > 255)
             throw new ArgumentException("Maksymalna długość nazwy to 255 znaków");
 
+        var existingLobby = await _context.Lobbies
+            .FirstOrDefaultAsync(l => l.Name == lobbyName && l.CreatedByUserId == userId);
+
+        if (existingLobby != null)
+            throw new InvalidOperationException("Lobby o tej nazwie zostało już utworzone");
+
         using (var transaction = await _context.Database.BeginTransactionAsync())
         {
             try

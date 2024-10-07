@@ -37,7 +37,7 @@ export const register = async (name, email, password) => {
 
 export const login = async (email, password) => {
   try {
-    const response = await axios.post(`${apiUrl}/user/login`, {
+    const response = await axios.post(clsx(apiUrl + '/user/login'), {
       email,
       password,
     });
