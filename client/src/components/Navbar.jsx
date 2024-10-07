@@ -14,17 +14,34 @@ const Navbar = () => {
       const decodeToken = jwtDecode(token);
       setUserName(decodeToken.Name);
     }
-  }, []);
+    const handleClickOutside = (event) => {
+      if (
+        menuVisible &&
+        event.target.closest(".menu-container") === null
+      ) {
+        setMenuVisible(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuVisible]);
 
   const handleChangeNick = () => {
+    setMenuVisible(false);
     navigate("/zmien-nick");
   };
 
   const handleChangePassword = () => {
+    setMenuVisible(false);
     navigate("/zmien-haslo");
   };
 
   const handleLogout = () => {
+    setMenuVisible(false);
     localStorage.removeItem("jwtToken");
     navigate("/logowanie");
   };
@@ -32,7 +49,7 @@ const Navbar = () => {
   return (
     <div className="w-full justify-between flex px-1 py-6 sm:p-8 bg-emerald-300 dark:bg-emerald-900 items-center border-b-2 border-neutral-200 dark:border-neutral-500">
       <DarkModeButton />
-      <div className="relative">
+      <div className="relative menu-container">
         <p
           className="text-xl font-extrabold text-center dark:text-white text-emerald-900 cursor-pointer"
           onClick={() => setMenuVisible(!menuVisible)}

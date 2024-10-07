@@ -54,6 +54,31 @@ public class LobbyController : ControllerBase
         }
     }
 
+    [HttpGet("{lobbyId}/details")]
+    public async Task<IActionResult> GetLobbyDetails([FromHeader] string token, int lobbyId)
+    {
+        try
+        {
+            if (!JwtTokenClass.ValidateToken(token, _context)) return Unauthorized();
+            var userId = JwtTokenClass.ExtractUserIdFromToken(token);
+
+            var lobbyDetails = await _lobbyService.GetLobbyDetails(lobbyId, userId);
+            return Ok(lobbyDetails);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "Wystąpił błąd podczas pobierania szczegółów lobby.");
+        }
+    }
+
     [HttpPost("addUser")]
     public async Task<IActionResult> AddUserToLobby([FromHeader] string token, int lobbyId, int userId)
     {

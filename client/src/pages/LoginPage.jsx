@@ -21,9 +21,11 @@ const LoginPage = () => {
       const result = await login(email, password);
 
       if (result) {
-        toast.success("Logowanie powiodło się");
         localStorage.setItem("jwtToken", result);
-        window.location.href = "/";
+        toast.success("Pomyślnie zalogowano");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
       }
     } catch (error) {
       toast.error(error.message);

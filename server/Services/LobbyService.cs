@@ -65,23 +65,76 @@ public class LobbyService : ILobbyService
         }
     }
 
+    public async Task<LobbyDetailsDto> GetLobbyDetails(int lobbyId, int userId)
+    {
+        var lobby = await _context.Lobbies
+            .Include(l => l.UsersInLobbies)
+            .Include(l => l.Blacklists)
+            .FirstOrDefaultAsync(l => l.Id == lobbyId);
+
+        if (lobby == null)
+            throw new ArgumentException("Podane lobby nie istnieje.");
+
+        var isUserInLobby = await _context.UsersInLobby
+            .AnyAsync(ul => ul.UserId == userId && ul.LobbyId == lobbyId);
+
+        if (!isUserInLobby && lobby.CreatedByUserId != userId)
+            throw new UnauthorizedAccessException("Nie masz dostępu do tego lobby.");
+
+        var usersInLobby = await _context.UsersInLobby
+            .Where(ul => ul.LobbyId == lobbyId)
+            .Select(ul => new UserDto
+            {
+                UserId = ul.User.Id,
+                UserName = ul.User.Name
+            })
+            .ToListAsync();
+
+        var blacklist = await _context.Blacklist
+            .Where(b => b.LobbyId == lobbyId)
+            .Select(b => new BlacklistDto
+            {
+                Id = b.Id,
+                Name = b.Name
+            })
+            .ToListAsync();
+
+        return new LobbyDetailsDto
+        {
+            LobbyId = lobby.Id,
+            Name = lobby.Name,
+            Users = usersInLobby,
+            Blacklist = blacklist
+        };
+    }
 
     public async Task<List<LobbyDto>> GetLobbiesForUser(int userId)
     {
         var createdLobbies = await _context.Lobbies
             .Where(l => l.CreatedByUserId == userId)
-            .Select(l => new LobbyDto { Id = l.Id, Name = l.Name })
+            .Select(l => new LobbyDto
+            {
+                Id = l.Id,
+                Name = l.Name,
+                PlayersCount = l.UsersInLobbies.Count()
+            })
             .ToListAsync();
 
         var joinedLobbies = await _context.UsersInLobby
             .Where(ul => ul.UserId == userId)
-            .Select(ul => new LobbyDto { Id = ul.Lobby.Id, Name = ul.Lobby.Name })
+            .Select(ul => new LobbyDto
+            {
+                Id = ul.Lobby.Id,
+                Name = ul.Lobby.Name,
+                PlayersCount = ul.Lobby.UsersInLobbies.Count()
+            })
             .ToListAsync();
 
         var allLobbies = createdLobbies.Union(joinedLobbies).ToList();
 
         return allLobbies;
     }
+
 
     public async Task<bool> AddUserToLobby(int userId, int lobbyId)
     {

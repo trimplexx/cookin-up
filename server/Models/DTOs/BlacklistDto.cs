@@ -1,8 +1,7 @@
 ﻿namespace server.Models.DTOs;
 
-public class LobbyDto
+public class BlacklistDto
 {
     public int Id { get; set; }
     public string Name { get; set; }
-    public int PlayersCount { get; set; }
 }
