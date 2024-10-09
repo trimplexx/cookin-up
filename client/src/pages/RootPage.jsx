@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import useAuthCheck from '../hooks/useAuthCheck';
 import { getUserLobbies } from '../api/lobbyApi';
 import { toast } from 'react-hot-toast';
 import SuspenseLoader from '../components/SuspenseLoader';
 import clsx from 'clsx';
 
 const RootPage = () => {
-  useAuthCheck();
-
   const [lobbies, setLobbies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 

@@ -1,12 +1,9 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-
 import SuspenseLoader from '../components/SuspenseLoader';
-import useAuthCheck from '../hooks/useAuthCheck';
 import { getLobbyDetails } from '../api/lobbyApi';
 
 const SingleLobbyPage = () => {
-  useAuthCheck();
   const { id } = useParams();
   const [lobby, setLobby] = useState(null);
   const [isLoading, setIsLoading] = useState(true);

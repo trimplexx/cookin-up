@@ -1,15 +1,13 @@
-import { useState } from "react";
-import InputField from "../components/InputField";
-import FormButton from "../components/FormButton";
-import { createLobby } from "../api/lobbyApi";
-import { toast } from "react-hot-toast";
-import useAuthCheck from "../hooks/useAuthCheck";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import InputField from '../components/InputField';
+import FormButton from '../components/FormButton';
+import { createLobby } from '../api/lobbyApi';
+import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const AddLobbyPage = () => {
-  useAuthCheck();
   const navigate = useNavigate();
-  const [lobbyName, setLobbyName] = useState("");
+  const [lobbyName, setLobbyName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateLobby = async (e) => {
@@ -17,18 +15,18 @@ const AddLobbyPage = () => {
 
     try {
       setIsLoading(true);
-      const token = localStorage.getItem("jwtToken");
+      const token = localStorage.getItem('jwtToken');
 
       if (!token) {
-        toast.error("Musisz być zalogowany, aby utworzyć lobby.");
+        toast.error('Musisz być zalogowany, aby utworzyć lobby.');
         return;
       }
 
       await createLobby(token, lobbyName);
-      toast.success("Lobby zostało pomyślnie utworzone.");
-      navigate("/");
+      toast.success('Lobby zostało pomyślnie utworzone.');
+      navigate('/');
     } catch (error) {
-      toast.error(error.message || "Wystąpił błąd podczas tworzenia lobby.");
+      toast.error(error.message || 'Wystąpił błąd podczas tworzenia lobby.');
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +50,7 @@ const AddLobbyPage = () => {
             />
             <div className="flex justify-between items-center mb-6">
               <FormButton
-                label={isLoading ? "Tworzenie..." : "Stwórz lobby"}
+                label={isLoading ? 'Tworzenie...' : 'Stwórz lobby'}
                 type="submit"
                 isLoading={isLoading}
               />
