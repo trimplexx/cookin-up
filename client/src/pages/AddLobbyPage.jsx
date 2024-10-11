@@ -2,7 +2,7 @@ import { useState } from 'react';
 import InputField from '../components/InputField';
 import FormButton from '../components/FormButton';
 import { createLobby } from '../api/lobbyApi';
-import { toast } from 'react-hot-toast';
+import { showToast } from '../utils/toastManager';
 import { useNavigate } from 'react-router-dom';
 
 const AddLobbyPage = () => {
@@ -15,18 +15,14 @@ const AddLobbyPage = () => {
 
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('jwtToken');
-
-      if (!token) {
-        toast.error('Musisz być zalogowany, aby utworzyć lobby.');
-        return;
-      }
-
-      await createLobby(token, lobbyName);
-      toast.success('Lobby zostało pomyślnie utworzone.');
+      await createLobby(lobbyName);
+      showToast.success('Lobby zostało pomyślnie utworzone.', '');
       navigate('/');
     } catch (error) {
-      toast.error(error.message || 'Wystąpił błąd podczas tworzenia lobby.');
+      showToast(
+        error.message || 'Wystąpił błąd podczas tworzenia lobby.',
+        'error'
+      );
     } finally {
       setIsLoading(false);
     }

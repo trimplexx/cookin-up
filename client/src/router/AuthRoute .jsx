@@ -1,28 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { verifyToken } from '../api/usersApi';
+import { useAuth } from '../hooks/useAuth';
 import SuspenseLoader from '../components/SuspenseLoader';
 import PropTypes from 'prop-types';
 
 const AuthRoute = ({ children }) => {
+  const { isAuthenticated, accessToken, refreshToken } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('jwtToken');
-      if (!token) {
+      if (!isAuthenticated && accessToken) {
+        try {
+          await refreshToken();
+        } catch (error) {
+          setLoading(false);
+        }
+      } else {
         setLoading(false);
-        return;
       }
-
-      const isValid = await verifyToken(token);
-      setIsAuthenticated(isValid);
-      setLoading(false);
     };
 
     checkAuth();
-  }, []);
+  }, [isAuthenticated, accessToken, refreshToken]);
 
   if (loading) {
     return <SuspenseLoader />;
@@ -31,8 +31,8 @@ const AuthRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/logowanie" />;
 };
 
-export default AuthRoute;
-
 AuthRoute.propTypes = {
   children: PropTypes.node.isRequired,
 };
+
+export default AuthRoute;

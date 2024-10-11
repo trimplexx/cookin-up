@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using server.Context;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using server.Interfaces;
-using server.Models.DTOs;
-using server.Static;
 
 namespace server.Controllers;
 
@@ -11,57 +9,24 @@ namespace server.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly CookinUpDbContext _context;
 
-    public UserController(IUserService userService, CookinUpDbContext context)
+    public UserController(IUserService userService)
     {
         _userService = userService;
-        _context = context;
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register(UserRegisterDto userRegisterDto)
+    [Authorize]
+    [HttpGet("name")]
+    public async Task<IActionResult> GetUserName()
     {
-        try
-        {
-            var result = await _userService.Register(userRegisterDto);
-            if (!result)
-            {
-                return Conflict("Użytkownik z takim emailem już istnieje.");
-            }
-            return Ok("Rejestracja powiodła się.");
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Wystąpił błąd serwera: {ex.Message}");
-        }
-    }
+        var userIdClaim = User.FindFirst("Id");
+        if (userIdClaim == null) return Unauthorized("Nie udało się znaleźć ID użytkownika w tokenie.");
 
+        var userId = int.Parse(userIdClaim.Value);
+        var userName = await _userService.GetUserNameById(userId);
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login(UserLoginDto userLoginDto)
-    {
-        var token = await _userService.Login(userLoginDto);
-        if (token == null) return Unauthorized("Nieprawidłowe dane logowania.");
-        return Ok(token);
-    }
+        if (userName == null) return NotFound("Użytkownik nie został znaleziony.");
 
-    [HttpHead("tokenVerify")]
-    public IActionResult TokenVerify([FromHeader] string jwtToken)
-    {
-        if (JwtTokenClass.ValidateToken(jwtToken, _context)) return Ok();
-        return Unauthorized();
-    }
-
-    [HttpPost("logout")]
-    public async Task<IActionResult> Logout([FromHeader] string token)
-    {
-        var result = await _userService.Logout(token);
-        if (!result) return BadRequest("Wylogowanie nie powiodło się lub token jest niepoprawny.");
-        return Ok("Wylogowanie powiodło się.");
+        return Ok(userName);
     }
 }

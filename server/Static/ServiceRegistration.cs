@@ -9,8 +9,9 @@ public static class ServiceRegistration
     public static void AddApplicationServices(this IServiceCollection services)
     {
         // Rejestracja serwisów
-        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ILobbyService, LobbyService>();
         services.AddScoped<ICookingDayService, CookingDayService>();
+        services.AddScoped<IUserService, UserService>();
     }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { getUserLobbies } from '../api/lobbyApi';
-import { toast } from 'react-hot-toast';
+import { showToast } from '../utils/toastManager';
 import SuspenseLoader from '../components/SuspenseLoader';
 import clsx from 'clsx';
 
@@ -12,14 +12,13 @@ const RootPage = () => {
   useEffect(() => {
     const fetchLobbies = async () => {
       try {
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-          return;
-        }
-        const userLobbies = await getUserLobbies(token);
+        const userLobbies = await getUserLobbies();
         setLobbies(userLobbies);
       } catch (error) {
-        toast.error(error.message || 'Wystąpił błąd podczas ładowania lobby.');
+        showToast(
+          error.message || 'Wystąpił błąd podczas ładowania lobby.',
+          'error'
+        );
       } finally {
         setIsLoading(false);
       }

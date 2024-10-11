@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using server.Context;
 using server.Interfaces;
 using server.Static;
@@ -18,15 +19,14 @@ public class CookingDayController : ControllerBase
         _context = context;
     }
 
+    [Authorize]
     [HttpGet("{lobbyId}")]
-    public async Task<IActionResult> GetCookingDaysForLobby([FromHeader] string token, int lobbyId)
+    public async Task<IActionResult> GetCookingDaysForLobby(int lobbyId)
     {
         try
         {
-            if (!JwtTokenClass.ValidateToken(token, _context)) return Unauthorized();
-            var userId = JwtTokenClass.ExtractUserIdFromToken(token);
-
-            var cookingDays = await _cookingDayService.GetCookingDaysForLobby(userId, lobbyId);
+            var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+            var cookingDays = await _cookingDayService.GetCookingDaysForLobby(requestingUserId, lobbyId);
             return Ok(cookingDays);
         }
         catch (UnauthorizedAccessException ex)
@@ -39,15 +39,14 @@ public class CookingDayController : ControllerBase
         }
     }
 
-
+    [Authorize]
     [HttpPost("date")]
-    public async Task<IActionResult> UpdateCookingDayDate([FromHeader] string token, int cookingDayId, DateTime newDate)
+    public async Task<IActionResult> UpdateCookingDayDate(int cookingDayId, DateTime newDate)
     {
         try
         {
-            if (!JwtTokenClass.ValidateToken(token, _context)) return Unauthorized();
-            var userId = JwtTokenClass.ExtractUserIdFromToken(token);
-            var result = await _cookingDayService.UpdateCookingDayDate(cookingDayId, newDate, userId);
+            var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+            var result = await _cookingDayService.UpdateCookingDayDate(cookingDayId, newDate, requestingUserId);
             if (result)
                 return Ok("Data została zaktualizowana.");
             return BadRequest("Nie udało się zaktualizować daty.");

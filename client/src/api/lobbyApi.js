@@ -1,17 +1,11 @@
-import axios from 'axios';
+import axios from './axios';
 import clsx from 'clsx';
 const apiUrl = import.meta.env.VITE_API_URL;
 
-export const createLobby = async (token, lobbyName) => {
+export const createLobby = async (lobbyName) => {
   try {
     const response = await axios.put(
-      clsx(apiUrl + '/lobby/create/' + lobbyName),
-      null,
-      {
-        headers: {
-          token: token,
-        },
-      }
+      clsx(apiUrl + '/lobby/create/' + lobbyName)
     );
 
     if (response.status === 200) {
@@ -22,13 +16,9 @@ export const createLobby = async (token, lobbyName) => {
   }
 };
 
-export const getUserLobbies = async (token) => {
+export const getUserLobbies = async () => {
   try {
-    const response = await axios.get(clsx(apiUrl + '/lobby'), {
-      headers: {
-        token: token,
-      },
-    });
+    const response = await axios.get(clsx(apiUrl + '/lobby'));
 
     if (response.status === 200) {
       return response.data;
@@ -40,15 +30,10 @@ export const getUserLobbies = async (token) => {
   }
 };
 
-export const getLobbyDetails = async (lobbyId, token) => {
+export const getLobbyDetails = async (lobbyId) => {
   try {
     const response = await axios.get(
-      clsx(apiUrl + '/lobby/' + lobbyId + '/details'),
-      {
-        headers: {
-          token: token,
-        },
-      }
+      clsx(apiUrl + `/lobby/${lobbyId}/details`)
     );
 
     if (response.status === 200) {

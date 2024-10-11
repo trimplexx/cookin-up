@@ -13,7 +13,7 @@ const SingleLobbyPage = () => {
     const fetchLobbyDetails = async () => {
       try {
         setIsLoading(true);
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('accessToken');
         const response = await getLobbyDetails(id, token);
         setLobby(response);
       } catch (err) {

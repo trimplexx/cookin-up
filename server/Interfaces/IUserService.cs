@@ -1,10 +1,6 @@
-﻿using server.Models.DTOs;
-
-namespace server.Interfaces;
+﻿namespace server.Interfaces;
 
 public interface IUserService
 {
-    Task<bool> Register(UserRegisterDto userRegisterDto);
-    Task<string?> Login(UserLoginDto userLoginDto);
-    Task<bool> Logout(string token);
+    Task<string?> GetUserNameById(int userId);
 }

@@ -1,36 +1,37 @@
-import { useState, useEffect } from "react";
-import { NavLink } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import InputField from "../components/InputField";
-import FormButton from "../components/FormButton";
-import { register } from "../api/usersApi";
-import { toast } from "react-hot-toast";
+import { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import InputField from '../components/InputField';
+import FormButton from '../components/FormButton';
+import { register } from '../api/authApi';
+import { showToast } from '../utils/toastManager';
+import { useAuth } from '../hooks/useAuth';
 
 const RegisterPage = () => {
-  const [nick, setNick] = useState("");
+  const [nick, setNick] = useState('');
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (token) {
-      navigate("/");
+    if (isAuthenticated) {
+      navigate('/');
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
     if (!nick || !email || !password || !confirmPassword) {
-      toast.error("Wszystkie pola muszą być wypełnione");
+      showToast('Wszystkie pola muszą być wypełnione', 'error');
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error("Hasła muszą być takie same");
+      showToast('Hasła muszą być takie same', 'error');
       return;
     }
 
@@ -39,11 +40,11 @@ const RegisterPage = () => {
       const result = await register(nick, email, password);
 
       if (result) {
-        toast.success("Rejestracja powiodła się");
-        navigate("/logowanie");
+        showToast('Rejestracja powiodła się', 'success');
+        navigate('/logowanie');
       }
     } catch (error) {
-      toast.error(error.message);
+      showToast(error.message, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -92,14 +93,14 @@ const RegisterPage = () => {
             />
             <div className="flex justify-between items-center mb-6">
               <FormButton
-                label={isLoading ? "Przetwarzanie..." : "Zarejestruj się"}
+                label={isLoading ? 'Przetwarzanie...' : 'Zarejestruj się'}
                 type="submit"
                 isLoading={isLoading}
               />
             </div>
           </form>
           <p className="text-center text-gray-600 dark:text-gray-400 mt-4">
-            Masz już konto?{" "}
+            Masz już konto?{' '}
             <NavLink
               to="/logowanie"
               className="text-emerald-600 dark:text-emerald-300 hover:underline transition-colors"

@@ -1,45 +1,30 @@
-import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import InputField from "../components/InputField";
-import FormButton from "../components/FormButton";
-import { login } from "../api/usersApi";
-import { toast } from "react-hot-toast";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import InputField from '../components/InputField';
+import FormButton from '../components/FormButton';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { handleLogin, isAuthenticated } = useAuth();
 
-  const handleLogin = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-
-    try {
-      setIsLoading(true);
-      const result = await login(email, password);
-
-      if (result) {
-        localStorage.setItem("jwtToken", result);
-        toast.success("Pomyślnie zalogowano");
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 1000);
-      }
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(true);
+    await handleLogin(email, password);
+    setIsLoading(false);
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (token) {
-      navigate("/");
+    if (isAuthenticated) {
+      navigate('/');
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className="w-full p-4">
@@ -48,7 +33,7 @@ const LoginPage = () => {
           <h2 className="text-3xl font-extrabold text-center text-emerald-600 dark:text-emerald-300 mb-6">
             Zaloguj się
           </h2>
-          <form className="space-y-6" onSubmit={handleLogin}>
+          <form className="space-y-6" onSubmit={onSubmit}>
             <InputField
               id="email"
               label="Email"
@@ -63,18 +48,18 @@ const LoginPage = () => {
               placeholder="Podaj hasło"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              isPassword={true}
+              isPassword
             />
             <div className="flex justify-between items-center mb-6">
               <FormButton
-                label={isLoading ? "Przetwarzanie..." : "Zaloguj się"}
+                label={isLoading ? 'Przetwarzanie...' : 'Zaloguj się'}
                 type="submit"
                 isLoading={isLoading}
               />
             </div>
           </form>
           <p className="text-center text-gray-600 dark:text-gray-400 mt-4">
-            Nie masz konta?{" "}
+            Nie masz konta?{' '}
             <NavLink
               to="/rejestracja"
               className="text-emerald-600 dark:text-emerald-300 hover:underline transition-colors"

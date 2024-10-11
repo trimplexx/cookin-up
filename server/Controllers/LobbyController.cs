@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using server.Context;
 using server.Interfaces;
 using server.Static;
@@ -18,14 +19,14 @@ public class LobbyController : ControllerBase
         _context = context;
     }
 
+    [Authorize]
     [HttpPut("create/{name}")]
-    public async Task<IActionResult> CreateLobby([FromHeader] string token, string name)
+    public async Task<IActionResult> CreateLobby(string name)
     {
         try
         {
-            if (!JwtTokenClass.ValidateToken(token, _context)) return Unauthorized();
-            var userId = JwtTokenClass.ExtractUserIdFromToken(token);
-            await _lobbyService.CreateLobby(name, userId);
+            var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+            await _lobbyService.CreateLobby(name, requestingUserId);
             return Ok();
         }
         catch (InvalidOperationException ex)
@@ -38,14 +39,14 @@ public class LobbyController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetLobbiesForUser([FromHeader] string token)
+    public async Task<IActionResult> GetLobbiesForUser()
     {
         try
         {
-            if (!JwtTokenClass.ValidateToken(token, _context)) return Unauthorized();
-            var userId = JwtTokenClass.ExtractUserIdFromToken(token);
-            var lobbies = await _lobbyService.GetLobbiesForUser(userId);
+            var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+            var lobbies = await _lobbyService.GetLobbiesForUser(requestingUserId);
             return Ok(lobbies);
         }
         catch (Exception)
@@ -54,15 +55,14 @@ public class LobbyController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpGet("{lobbyId}/details")]
-    public async Task<IActionResult> GetLobbyDetails([FromHeader] string token, int lobbyId)
+    public async Task<IActionResult> GetLobbyDetails(int lobbyId)
     {
         try
         {
-            if (!JwtTokenClass.ValidateToken(token, _context)) return Unauthorized();
-            var userId = JwtTokenClass.ExtractUserIdFromToken(token);
-
-            var lobbyDetails = await _lobbyService.GetLobbyDetails(lobbyId, userId);
+            var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+            var lobbyDetails = await _lobbyService.GetLobbyDetails(lobbyId, requestingUserId);
             return Ok(lobbyDetails);
         }
         catch (UnauthorizedAccessException ex)
@@ -79,12 +79,12 @@ public class LobbyController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpPost("addUser")]
-    public async Task<IActionResult> AddUserToLobby([FromHeader] string token, int lobbyId, int userId)
+    public async Task<IActionResult> AddUserToLobby(int lobbyId, int userId)
     {
         try
         {
-            if (!JwtTokenClass.ValidateToken(token, _context)) return Unauthorized();
             await _lobbyService.AddUserToLobby(userId, lobbyId);
             return Ok("Użytkownik został dodany do lobby.");
         }
@@ -106,14 +106,14 @@ public class LobbyController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpDelete("{lobbyId}")]
-    public async Task<IActionResult> DeleteLobby([FromHeader] string token, int lobbyId)
+    public async Task<IActionResult> DeleteLobby(int lobbyId)
     {
         try
         {
-            if (!JwtTokenClass.ValidateToken(token, _context)) return Unauthorized();
-            var userId = JwtTokenClass.ExtractUserIdFromToken(token);
-            var result = await _lobbyService.DeleteLobby(lobbyId, userId);
+            var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+            var result = await _lobbyService.DeleteLobby(lobbyId, requestingUserId);
             if (result)
                 return Ok("Lobby zostało usunięte.");
             return BadRequest("Nie udało się usunąć lobby.");
@@ -132,16 +132,18 @@ public class LobbyController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpDelete("user")]
-    public async Task<IActionResult> RemoveUserFromLobby([FromHeader] string token, int lobbyId, int userId)
+    public async Task<IActionResult> RemoveUserFromLobby(int lobbyId, int userId)
     {
         try
         {
-            if (!JwtTokenClass.ValidateToken(token, _context)) return Unauthorized();
-            var requestingUserId = JwtTokenClass.ExtractUserIdFromToken(token);
+            var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+
             var result = await _lobbyService.RemoveUserFromLobby(userId, lobbyId, requestingUserId);
             if (result)
                 return Ok("Użytkownik został usunięty z lobby.");
+
             return BadRequest("Nie udało się usunąć użytkownika.");
         }
         catch (ArgumentException ex)
