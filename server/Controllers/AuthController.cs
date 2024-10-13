@@ -42,18 +42,20 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login(UserLoginDto userLoginDto)
     {
         var result = await _authService.Login(userLoginDto);
+
         if (result == null) return Unauthorized("Nieprawidłowe dane logowania.");
 
-        Response.Cookies.Append("refreshToken", result.Value.refreshToken, new CookieOptions
+        Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
         {
             HttpOnly = true,
-            SameSite = ServiceRegistration.isDev ? SameSiteMode.None : SameSiteMode.Lax,
-            Secure = ServiceRegistration.isDev,
+            SameSite = SameSiteMode.Lax,
+            Secure = Request.IsHttps,
             Expires = DateTime.UtcNow.AddDays(7)
         });
 
-        return Ok(new { result.Value.accessToken, result.Value.userName });
+        return Ok(new { result.AccessToken, result.RefreshToken });
     }
+
 
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken()
@@ -67,22 +69,23 @@ public class AuthController : ControllerBase
 
             var accessToken = authorizationHeader.Substring("Bearer ".Length).Trim();
 
-            var tokens = await _authService.RefreshTokenAsync(refreshToken, accessToken);
+            var tokens = await _authService.RefreshToken(refreshToken, accessToken);
             if (tokens == null) return BadRequest("Błąd generowania nowych tokenów");
 
             Response.Cookies.Append("refreshToken", tokens.Value.refreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 SameSite = ServiceRegistration.isDev ? SameSiteMode.None : SameSiteMode.Lax,
-                Secure = ServiceRegistration.isDev,
+                Secure = !ServiceRegistration.isDev,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
 
-            return Ok(new { tokens.Value.accessToken });
+            return Ok(new { accessToken = tokens.Value.accessToken });
         }
 
         return BadRequest("Brak refreshTokenu");
     }
+
 
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
@@ -94,7 +97,7 @@ public class AuthController : ControllerBase
 
         var accessToken = "";
         var authorizationHeader = Request.Headers["Authorization"].ToString();
-        if (!string.IsNullOrEmpty(authorizationHeader) || authorizationHeader.StartsWith("Bearer "))
+        if (!string.IsNullOrEmpty(authorizationHeader) && authorizationHeader.StartsWith("Bearer "))
             accessToken = authorizationHeader.Substring("Bearer ".Length).Trim();
 
         await _authService.Logout(accessToken, refreshToken);

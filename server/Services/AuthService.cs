@@ -61,10 +61,9 @@ public class AuthService : IAuthService
         return true;
     }
 
-    public async Task<(string accessToken, string refreshToken, string userName)?> Login(UserLoginDto userLoginDto)
+    public async Task<AuthResponseDto?> Login(UserLoginDto userLoginDto)
     {
         var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == userLoginDto.Email);
-
         if (user == null) return null;
 
         var passwordParts = user.Password.Split(':');
@@ -76,14 +75,29 @@ public class AuthService : IAuthService
         var accessToken = GenerateJwtToken(user);
         var refreshToken = GenerateRefreshToken();
 
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        var expiredSessions = await _context.UserSessions
+            .Where(us => us.UserId == user.Id && us.RefreshTokenExpiryTime < DateTime.UtcNow)
+            .ToListAsync();
+        _context.UserSessions.RemoveRange(expiredSessions);
 
+        var newSession = new UserSession
+        {
+            UserId = user.Id,
+            RefreshToken = refreshToken,
+            RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _context.UserSessions.AddAsync(newSession);
         await _context.SaveChangesAsync();
 
-        return (accessToken, refreshToken, user.Name);
+        return new AuthResponseDto
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            UserName = user.Name
+        };
     }
-
 
     private string GenerateRefreshToken()
     {
@@ -96,15 +110,18 @@ public class AuthService : IAuthService
         return Convert.ToBase64String(randomBytes);
     }
 
-    public async Task<(string accessToken, string refreshToken)?> RefreshTokenAsync(string refreshToken,
+    public async Task<(string accessToken, string refreshToken)?> RefreshToken(string refreshToken,
         string accessToken)
     {
         var isRevoked =
             await _context.RevokedTokens.AnyAsync(rt => rt.Token == refreshToken || rt.Token == accessToken);
         if (isRevoked) return null;
 
-        var user = await _context.Users.SingleOrDefaultAsync(u => u.RefreshToken == refreshToken);
-        if (user == null || user.RefreshTokenExpiryTime < DateTime.UtcNow) return null;
+        var userSession = await _context.UserSessions
+            .Include(us => us.User)
+            .SingleOrDefaultAsync(us => us.RefreshToken == refreshToken);
+
+        if (userSession == null) return null;
 
         var jwtHandler = new JwtSecurityTokenHandler();
         try
@@ -118,6 +135,7 @@ public class AuthService : IAuthService
                 IssuerSigningKey = key,
                 ValidateIssuer = false,
                 ValidateAudience = false,
+                ValidateLifetime = false,
                 ClockSkew = TimeSpan.Zero
             }, out var validatedToken);
 
@@ -130,51 +148,44 @@ public class AuthService : IAuthService
             return null;
         }
 
-        var newJwtToken = GenerateJwtToken(user);
+        var newJwtToken = GenerateJwtToken(userSession.User);
         var newRefreshToken = GenerateRefreshToken();
 
-        user.RefreshToken = newRefreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        userSession.RefreshToken = newRefreshToken;
+        userSession.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
         await _context.SaveChangesAsync();
 
         return (newJwtToken, newRefreshToken);
     }
 
+
     public async Task Logout(string? accessToken, string? refreshToken)
     {
-        var user = await _context.Users.SingleOrDefaultAsync(u => u.RefreshToken == refreshToken);
-        if (user != null)
+        var userSession = await _context.UserSessions.SingleOrDefaultAsync(us => us.RefreshToken == refreshToken);
+        if (userSession != null) _context.UserSessions.Remove(userSession);
+
+        var isRevokedAccessToken = await _context.RevokedTokens.AnyAsync(rt => rt.Token == accessToken);
+        if (!isRevokedAccessToken && !string.IsNullOrEmpty(accessToken))
         {
-            user.RefreshToken = null;
-            user.RefreshTokenExpiryTime = null;
+            var revokedTokenJwt = new RevokedToken
+            {
+                Token = accessToken,
+                RevokedAt = DateTime.UtcNow
+            };
+            await _context.RevokedTokens.AddAsync(revokedTokenJwt);
         }
 
-        var isRevokedAccessToken =
-            await _context.RevokedTokens.AnyAsync(rt => rt.Token == accessToken);
-        if (!isRevokedAccessToken)
-            if (!string.IsNullOrEmpty(accessToken))
+        var isRevokedRefreshToken = await _context.RevokedTokens.AnyAsync(rt => rt.Token == refreshToken);
+        if (!isRevokedRefreshToken && !string.IsNullOrEmpty(refreshToken))
+        {
+            var revokedTokenRefresh = new RevokedToken
             {
-                var revokedTokenJwt = new RevokedToken
-                {
-                    Token = accessToken,
-                    RevokedAt = DateTime.UtcNow
-                };
-                await _context.RevokedTokens.AddAsync(revokedTokenJwt);
-            }
-
-        var isRevokedRefreshToken =
-            await _context.RevokedTokens.AnyAsync(rt => rt.Token == refreshToken);
-        if (!isRevokedRefreshToken)
-            if (!string.IsNullOrEmpty(refreshToken))
-            {
-                var revokedTokenRefresh = new RevokedToken
-                {
-                    Token = refreshToken,
-                    RevokedAt = DateTime.UtcNow
-                };
-                await _context.RevokedTokens.AddAsync(revokedTokenRefresh);
-            }
+                Token = refreshToken,
+                RevokedAt = DateTime.UtcNow
+            };
+            await _context.RevokedTokens.AddAsync(revokedTokenRefresh);
+        }
 
         await _context.SaveChangesAsync();
     }

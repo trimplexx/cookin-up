@@ -20,6 +20,7 @@ public class CookinUpDbContext : DbContext
     public DbSet<UsersInLobby> UsersInLobby { get; set; }
     public DbSet<Blacklist> Blacklist { get; set; }
     public DbSet<RevokedToken> RevokedTokens { get; set; }
+    public DbSet<UserSession> UserSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -196,6 +197,26 @@ public class CookinUpDbContext : DbContext
 
             entity.Property(rt => rt.RevokedAt)
                 .IsRequired();
+        });
+        // Konfiguracja UserSession
+        modelBuilder.Entity<UserSession>(entity =>
+        {
+            entity.HasKey(us => us.Id);
+
+            entity.Property(us => us.RefreshToken)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            entity.Property(us => us.RefreshTokenExpiryTime)
+                .IsRequired();
+
+            entity.Property(us => us.CreatedAt)
+                .IsRequired();
+
+            entity.HasOne(us => us.User)
+                .WithMany(u => u.UserSessions)
+                .HasForeignKey(us => us.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
