@@ -7,7 +7,7 @@ using server.Context;
 using server.Static;
 
 var builder = WebApplication.CreateBuilder(args);
-
+ServiceRegistration.isDev = builder.Environment.IsDevelopment();
 builder.Services.AddApplicationServices();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -67,5 +67,6 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAllOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
+if (!builder.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();

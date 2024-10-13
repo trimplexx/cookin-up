@@ -47,8 +47,8 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("refreshToken", result.Value.refreshToken, new CookieOptions
         {
             HttpOnly = true,
-            SameSite = SameSiteMode.Lax,
-            Secure = !Request.IsHttps,
+            SameSite = ServiceRegistration.isDev ? SameSiteMode.None : SameSiteMode.Lax,
+            Secure = ServiceRegistration.isDev,
             Expires = DateTime.UtcNow.AddDays(7)
         });
 
@@ -63,25 +63,25 @@ public class AuthController : ControllerBase
             var authorizationHeader = Request.Headers["Authorization"].ToString();
 
             if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
-                return BadRequest("Błąd sesji użytkownika");
+                return BadRequest("Brak access tokenu");
 
             var accessToken = authorizationHeader.Substring("Bearer ".Length).Trim();
 
             var tokens = await _authService.RefreshTokenAsync(refreshToken, accessToken);
-            if (tokens == null) return BadRequest("Błąd sesji użytkownika");
+            if (tokens == null) return BadRequest("Błąd generowania nowych tokenów");
 
             Response.Cookies.Append("refreshToken", tokens.Value.refreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                SameSite = SameSiteMode.Lax,
-                Secure = !Request.IsHttps,
+                SameSite = ServiceRegistration.isDev ? SameSiteMode.None : SameSiteMode.Lax,
+                Secure = ServiceRegistration.isDev,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
 
             return Ok(new { tokens.Value.accessToken });
         }
 
-        return BadRequest("Błąd sesji użytkownika");
+        return BadRequest("Brak refreshTokenu");
     }
 
     [HttpPost("logout")]

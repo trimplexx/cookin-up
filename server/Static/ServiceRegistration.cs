@@ -6,6 +6,8 @@ namespace server.Static;
 
 public static class ServiceRegistration
 {
+    public static bool isDev;
+
     public static void AddApplicationServices(this IServiceCollection services)
     {
         // Rejestracja serwisów
