@@ -1,13 +1,12 @@
-import { useState } from 'react';
-import InputField from '../components/InputField';
-import FormButton from '../components/FormButton';
-import { createLobby } from '../api/lobbyApi';
-import { showToast } from '../utils/toastManager';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { createLobby } from "../api/lobbyApi";
+import { showToast } from "../utils/toastManager";
+import { useNavigate } from "react-router-dom";
+import CreateLobbyForm from "../components/CreateLobbyForm";
 
 const AddLobbyPage = () => {
   const navigate = useNavigate();
-  const [lobbyName, setLobbyName] = useState('');
+  const [lobbyName, setLobbyName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateLobby = async (e) => {
@@ -16,12 +15,12 @@ const AddLobbyPage = () => {
     try {
       setIsLoading(true);
       await createLobby(lobbyName);
-      showToast.success('Lobby zostało pomyślnie utworzone.', '');
-      navigate('/');
+      showToast.success("Lobby zostało pomyślnie utworzone.", "");
+      navigate("/");
     } catch (error) {
       showToast(
-        error.message || 'Wystąpił błąd podczas tworzenia lobby.',
-        'error'
+        error.message || "Wystąpił błąd podczas tworzenia lobby.",
+        "error"
       );
     } finally {
       setIsLoading(false);
@@ -35,23 +34,12 @@ const AddLobbyPage = () => {
           <h2 className="text-3xl font-extrabold text-center text-emerald-600 dark:text-emerald-300 mb-6">
             Stwórz nowe lobby
           </h2>
-          <form className="space-y-6" onSubmit={handleCreateLobby}>
-            <InputField
-              id="lobbyName"
-              label="Nazwa lobby"
-              type="text"
-              placeholder="Podaj nazwę lobby"
-              value={lobbyName}
-              onChange={(e) => setLobbyName(e.target.value)}
-            />
-            <div className="flex justify-between items-center mb-6">
-              <FormButton
-                label={isLoading ? 'Tworzenie...' : 'Stwórz lobby'}
-                type="submit"
-                isLoading={isLoading}
-              />
-            </div>
-          </form>
+          <CreateLobbyForm
+            lobbyName={lobbyName}
+            setLobbyName={setLobbyName}
+            isLoading={isLoading}
+            onSubmit={handleCreateLobby}
+          />
         </div>
       </div>
     </div>

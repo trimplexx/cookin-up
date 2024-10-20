@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using server.Context;
+﻿using Microsoft.AspNetCore.Mvc;
 using server.Interfaces;
 using server.Models.DTOs;
 using server.Static;
@@ -25,12 +22,16 @@ public class AuthController : ControllerBase
         try
         {
             var result = await _authService.Register(userRegisterDto);
-            if (!result) return Conflict("Użytkownik z takim emailem już istnieje.");
+            if (!result) throw new Exception();
             return Ok("Rejestracja powiodła się.");
         }
         catch (ArgumentException ex)
         {
             return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
         }
         catch (Exception ex)
         {
@@ -75,12 +76,12 @@ public class AuthController : ControllerBase
             Response.Cookies.Append("refreshToken", tokens.Value.refreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                SameSite = ServiceRegistration.isDev ? SameSiteMode.None : SameSiteMode.Lax,
+                SameSite = SameSiteMode.Lax,
                 Secure = !ServiceRegistration.isDev,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
 
-            return Ok(new { accessToken = tokens.Value.accessToken });
+            return Ok(new { tokens.Value.accessToken });
         }
 
         return BadRequest("Brak refreshTokenu");

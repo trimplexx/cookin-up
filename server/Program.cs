@@ -28,7 +28,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-
 builder.Configuration.AddAzureKeyVault(
     new Uri($"https://{builder.Configuration["KeyVaultName"]}.vault.azure.net/"),
     new DefaultAzureCredential());
@@ -63,10 +62,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("AllowAllOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
-if (!builder.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();

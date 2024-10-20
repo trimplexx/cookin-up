@@ -1,25 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using server.Context;
 using server.Interfaces;
 using server.Models.Db;
 using server.Models.DTOs;
-using server.Static;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace server.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly CookinUpDbContext _context;
-    private readonly IConfiguration _configuration;
     private const int SaltSize = 16;
     private const int HashSize = 32;
     private const int HashIterations = 10000;
+    private readonly IConfiguration _configuration;
+    private readonly CookinUpDbContext _context;
 
     public AuthService(CookinUpDbContext context, IConfiguration configuration)
     {
@@ -43,12 +42,16 @@ public class AuthService : IAuthService
             throw new ArgumentException(
                 "Hasło musi zawierać co najmniej 8 znaków, jedną wielką literę, jedną cyfrę i jeden znak specjalny.");
 
-        if (await _context.Users.AnyAsync(u => u.Email == userRegisterDto.Email)) return false;
+        if (await _context.Users.AnyAsync(u => u.Email == userRegisterDto.Email))
+            throw new InvalidOperationException("Użytkownik z takim adresem email już istnieje");
+        if (await _context.Users.AnyAsync(u => u.Name == userRegisterDto.Name))
+            throw new InvalidOperationException("Użytkownik z takim nickiem już istnieje");
 
         var salt = GenerateSalt();
         var hashedPassword = HashPassword(userRegisterDto.Password, salt);
 
         var user = new Users
+
         {
             Name = userRegisterDto.Name,
             Email = userRegisterDto.Email,
@@ -97,17 +100,6 @@ public class AuthService : IAuthService
             RefreshToken = refreshToken,
             UserName = user.Name
         };
-    }
-
-    private string GenerateRefreshToken()
-    {
-        var randomBytes = new byte[64];
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            rng.GetBytes(randomBytes);
-        }
-
-        return Convert.ToBase64String(randomBytes);
     }
 
     public async Task<(string accessToken, string refreshToken)?> RefreshToken(string refreshToken,
@@ -188,6 +180,17 @@ public class AuthService : IAuthService
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    private string GenerateRefreshToken()
+    {
+        var randomBytes = new byte[64];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(randomBytes);
+        }
+
+        return Convert.ToBase64String(randomBytes);
     }
 
 

@@ -33,7 +33,7 @@ export const getUserLobbies = async () => {
 export const getLobbyDetails = async (lobbyId) => {
   try {
     const response = await axios.get(
-      clsx(apiUrl + `/lobby/${lobbyId}/details`)
+      clsx(apiUrl + '/lobby/' + lobbyId + '/details')
     );
 
     if (response.status === 200) {
@@ -43,6 +43,102 @@ export const getLobbyDetails = async (lobbyId) => {
     throw new Error(
       error.response?.data ||
         'Wystąpił błąd podczas pobierania szczegółów lobby'
+    );
+  }
+};
+
+export const addUserToLobby = async (lobbyId, userName) => {
+  try {
+    const response = await axios.post(clsx(apiUrl + '/lobby/addUser'), {
+      lobbyId,
+      userName,
+    });
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    throw new Error(
+      error.response?.data ||
+        'Wystąpił błąd podczas dodawania użytkownika do lobby'
+    );
+  }
+};
+
+export const addItemToBlacklist = async (lobbyId, itemName) => {
+  try {
+    const response = await axios.post(
+      clsx(apiUrl + '/lobby/addItemToBlacklist'),
+      {
+        lobbyId,
+        itemName,
+      }
+    );
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    throw new Error(
+      error.response?.data ||
+        'Wystąpił błąd podczas dodawania przedmiotu do czarnej listy'
+    );
+  }
+};
+
+export const removeItemFromBlacklist = async (lobbyId, itemName) => {
+  try {
+    const response = await axios.delete(
+      clsx(apiUrl + '/lobby/itemFromBlacklist'),
+      {
+        data: { lobbyId, itemName },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    throw new Error(
+      error.response?.data ||
+        'Wystąpił błąd podczas usuwania przedmiotu z czarnej listy'
+    );
+  }
+};
+
+export const deleteLobby = async (lobbyId) => {
+  try {
+    const response = await axios.delete(clsx(apiUrl + '/lobby/' + lobbyId));
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    throw new Error(
+      error.response?.data || 'Wystąpił błąd podczas usuwania lobby'
+    );
+  }
+};
+
+export const removeUserFromLobby = async (lobbyId, userName) => {
+  try {
+    const response = await axios.delete(clsx(apiUrl + '/lobby/userFromLobby'), {
+      data: { lobbyId, userName },
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    throw new Error(
+      error.response?.data ||
+        'Wystąpił błąd podczas usuwania użytkownika z lobby'
     );
   }
 };

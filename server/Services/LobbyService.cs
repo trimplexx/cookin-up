@@ -1,37 +1,28 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using server.Context;
 using server.Interfaces;
 using server.Models.Db;
 using server.Models.DTOs;
-using server.Static;
 
 namespace server.Services;
 
-public class LobbyService : ILobbyService
+public class LobbyService(CookinUpDbContext context) : ILobbyService
 {
-    private readonly CookinUpDbContext _context;
-
-    public LobbyService(CookinUpDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<bool> CreateLobby(string lobbyName, int userId)
     {
         if (string.IsNullOrWhiteSpace(lobbyName))
-            throw new ArgumentException("Nazwa lobby nie może być pusta");
+            throw new ArgumentException("Nazwa lobbyDto nie może być pusta");
 
         if (lobbyName.Length > 255)
             throw new ArgumentException("Maksymalna długość nazwy to 255 znaków");
 
-        var existingLobby = await _context.Lobbies
+        var existingLobby = await context.Lobbies
             .FirstOrDefaultAsync(l => l.Name == lobbyName && l.CreatedByUserId == userId);
 
         if (existingLobby != null)
             throw new InvalidOperationException("Lobby o tej nazwie zostało już utworzone");
 
-        using (var transaction = await _context.Database.BeginTransactionAsync())
+        using (var transaction = await context.Database.BeginTransactionAsync())
         {
             try
             {
@@ -41,8 +32,8 @@ public class LobbyService : ILobbyService
                     CreatedByUserId = userId
                 };
 
-                _context.Lobbies.Add(lobby);
-                await _context.SaveChangesAsync();
+                context.Lobbies.Add(lobby);
+                await context.SaveChangesAsync();
 
                 var cookingDay = new CookingDay
                 {
@@ -50,8 +41,8 @@ public class LobbyService : ILobbyService
                     LobbyId = lobby.Id
                 };
 
-                _context.CookingDays.Add(cookingDay);
-                await _context.SaveChangesAsync();
+                context.CookingDays.Add(cookingDay);
+                await context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
 
@@ -60,28 +51,28 @@ public class LobbyService : ILobbyService
             catch (Exception)
             {
                 await transaction.RollbackAsync();
-                throw new Exception("Wystąpił błąd podczas tworzenia lobby lub CookingDay.");
+                throw new Exception("Wystąpił błąd podczas tworzenia lobbyDto lub CookingDay.");
             }
         }
     }
 
     public async Task<LobbyDetailsDto> GetLobbyDetails(int lobbyId, int userId)
     {
-        var lobby = await _context.Lobbies
+        var lobby = await context.Lobbies
             .Include(l => l.UsersInLobbies)
             .Include(l => l.Blacklists)
             .FirstOrDefaultAsync(l => l.Id == lobbyId);
 
         if (lobby == null)
-            throw new ArgumentException("Podane lobby nie istnieje.");
+            throw new ArgumentException("Podane lobbyDto nie istnieje.");
 
-        var isUserInLobby = await _context.UsersInLobby
+        var isUserInLobby = await context.UsersInLobby
             .AnyAsync(ul => ul.UserId == userId && ul.LobbyId == lobbyId);
 
         if (!isUserInLobby && lobby.CreatedByUserId != userId)
-            throw new UnauthorizedAccessException("Nie masz dostępu do tego lobby.");
+            throw new UnauthorizedAccessException("Nie masz dostępu do tego lobbyDto.");
 
-        var usersInLobby = await _context.UsersInLobby
+        var usersInLobby = await context.UsersInLobby
             .Where(ul => ul.LobbyId == lobbyId)
             .Select(ul => new UserDto
             {
@@ -90,7 +81,7 @@ public class LobbyService : ILobbyService
             })
             .ToListAsync();
 
-        var blacklist = await _context.Blacklist
+        var blacklist = await context.Blacklist
             .Where(b => b.LobbyId == lobbyId)
             .Select(b => new BlacklistDto
             {
@@ -110,7 +101,7 @@ public class LobbyService : ILobbyService
 
     public async Task<List<LobbyDto>> GetLobbiesForUser(int userId)
     {
-        var createdLobbies = await _context.Lobbies
+        var createdLobbies = await context.Lobbies
             .Where(l => l.CreatedByUserId == userId)
             .Select(l => new LobbyDto
             {
@@ -120,7 +111,7 @@ public class LobbyService : ILobbyService
             })
             .ToListAsync();
 
-        var joinedLobbies = await _context.UsersInLobby
+        var joinedLobbies = await context.UsersInLobby
             .Where(ul => ul.UserId == userId)
             .Select(ul => new LobbyDto
             {
@@ -135,41 +126,108 @@ public class LobbyService : ILobbyService
         return allLobbies;
     }
 
-
-    public async Task<bool> AddUserToLobby(int userId, int lobbyId)
+    public async Task<bool> DeleteLobby(int lobbyId, int userId)
     {
-        using (var transaction = await _context.Database.BeginTransactionAsync())
+        var lobby = await context.Lobbies.FindAsync(lobbyId);
+        if (lobby == null)
+            throw new ArgumentException("Podane lobbyDto nie istnieje.");
+
+        if (lobby.CreatedByUserId != userId)
+            throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia tego lobbyDto.");
+
+        context.Lobbies.Remove(lobby);
+        await context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> RemoveUserFromLobby(AddRemoveFromLobbyDto lobbyDto, int requestingUserId)
+    {
+        var lobby = await context.Lobbies.FindAsync(lobbyDto.lobbyId);
+        if (lobby == null)
+            throw new ArgumentException("Podane lobbyDto nie istnieje.");
+
+        if (lobby.CreatedByUserId != requestingUserId)
+            throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia użytkownika z tego lobbyDto.");
+
+        var user = await context.Users.FirstAsync(u => u.Name == lobbyDto.userName);
+        if (user == null) throw new ArgumentException("Użytkownik nie istnieje");
+
+        var userInLobby = await context.UsersInLobby
+            .FirstOrDefaultAsync(ul => ul.UserId == user.Id && ul.LobbyId == lobbyDto.lobbyId);
+
+        if (userInLobby == null)
+            throw new ArgumentException("Użytkownik nie jest w tym lobbyDto.");
+
+        context.UsersInLobby.Remove(userInLobby);
+        await context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> AddItemToBlacklist(AddRemoveFromBlackListDto blackListDto, int requestingUserId)
+    {
+        var lobby = await context.Lobbies.FindAsync(blackListDto.lobbyId);
+        if (lobby == null) throw new ArgumentException("Podane lobbyDto nie istnieje.");
+
+        var item = await context.Blacklist.AnyAsync(b =>
+            b.Name == blackListDto.itemName && b.LobbyId == blackListDto.lobbyId);
+        if (item) throw new ArgumentException("Taki item znajduje się już na liście w lobbyDto.");
+
+        var isUserInLobby = await context.UsersInLobby
+            .AnyAsync(ul => ul.UserId == requestingUserId && ul.LobbyId == blackListDto.lobbyId);
+
+        if (isUserInLobby)
+            throw new UnauthorizedAccessException("Nie masz uprawnień.");
+
+        var newItem = new Blacklist
+        {
+            Name = blackListDto.itemName,
+            LobbyId = blackListDto.lobbyId
+        };
+
+        context.Blacklist.Add(newItem);
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+
+    public async Task<bool> AddUserToLobby(AddRemoveFromLobbyDto lobbyDto, int requestingUserId)
+    {
+        using (var transaction = await context.Database.BeginTransactionAsync())
         {
             try
             {
-                var lobby = await _context.Lobbies.FindAsync(lobbyId);
-                if (lobby == null) throw new ArgumentException("Podane lobby nie istnieje.");
+                var user = await context.Users.SingleOrDefaultAsync(u => u.Name == lobbyDto.userName);
+                if (user == null) throw new ArgumentException("Taki użytkownik nie istnieje.");
+                var lobby = await context.Lobbies.FindAsync(lobbyDto.lobbyId);
+                if (lobby == null) throw new ArgumentException("Podane lobbyDto nie istnieje.");
 
-                var isUserInLobby = await _context.UsersInLobby
-                    .AnyAsync(ul => ul.UserId == userId && ul.LobbyId == lobbyId);
+                var isUserInLobby = await context.UsersInLobby
+                    .AnyAsync(ul => ul.UserId == user.Id && ul.LobbyId == lobbyDto.lobbyId);
 
-                if (isUserInLobby) throw new InvalidOperationException("Użytkownik już znajduje się w tym lobby.");
+                if (isUserInLobby) throw new InvalidOperationException("Użytkownik już znajduje się w tym lobbyDto.");
 
-                if (lobby.CreatedByUserId != userId)
-                    throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia tego lobby.");
+                if (lobby.CreatedByUserId != requestingUserId)
+                    throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia tego lobbyDto.");
 
                 var userInLobby = new UsersInLobby
                 {
-                    UserId = userId,
-                    LobbyId = lobbyId
+                    UserId = user.Id,
+                    LobbyId = lobbyDto.lobbyId
                 };
 
-                _context.UsersInLobby.Add(userInLobby);
-                await _context.SaveChangesAsync();
+                context.UsersInLobby.Add(userInLobby);
+                await context.SaveChangesAsync();
 
                 var cookingDay = new CookingDay
                 {
-                    UserId = userId,
+                    UserId = user.Id,
                     LobbyId = lobby.Id
                 };
 
-                _context.CookingDays.Add(cookingDay);
-                await _context.SaveChangesAsync();
+                context.CookingDays.Add(cookingDay);
+                await context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
                 return true;
@@ -182,38 +240,22 @@ public class LobbyService : ILobbyService
         }
     }
 
-    public async Task<bool> DeleteLobby(int lobbyId, int userId)
+    public async Task<bool> RemoveItemFromBlacklist(AddRemoveFromBlackListDto blackListDto, int requestingUserId)
     {
-        var lobby = await _context.Lobbies.FindAsync(lobbyId);
+        var lobby = await context.Lobbies.FindAsync(blackListDto.lobbyId);
         if (lobby == null)
-            throw new ArgumentException("Podane lobby nie istnieje.");
-
-        if (lobby.CreatedByUserId != userId)
-            throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia tego lobby.");
-
-        _context.Lobbies.Remove(lobby);
-        await _context.SaveChangesAsync();
-
-        return true;
-    }
-
-    public async Task<bool> RemoveUserFromLobby(int userId, int lobbyId, int requestingUserId)
-    {
-        var lobby = await _context.Lobbies.FindAsync(lobbyId);
-        if (lobby == null)
-            throw new ArgumentException("Podane lobby nie istnieje.");
+            throw new ArgumentException("Podane lobbyDto nie istnieje.");
 
         if (lobby.CreatedByUserId != requestingUserId)
-            throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia użytkownika z tego lobby.");
+            throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia przedmiotu z czarnej listy.");
 
-        var userInLobby = await _context.UsersInLobby
-            .FirstOrDefaultAsync(ul => ul.UserId == userId && ul.LobbyId == lobbyId);
+        var item = await context.Blacklist.FirstOrDefaultAsync(b =>
+            b.Name == blackListDto.itemName && b.LobbyId == blackListDto.lobbyId);
+        if (item == null)
+            throw new ArgumentException("Podany przedmiot nie istnieje na czarnej liście tego lobbyDto.");
 
-        if (userInLobby == null)
-            throw new ArgumentException("Użytkownik nie jest w tym lobby.");
-
-        _context.UsersInLobby.Remove(userInLobby);
-        await _context.SaveChangesAsync();
+        context.Blacklist.Remove(item);
+        await context.SaveChangesAsync();
 
         return true;
     }

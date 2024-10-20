@@ -1,24 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using server.Context;
 using server.Interfaces;
-using server.Static;
 
 namespace server.Controllers;
 
 [Route("api/cookingDay")]
 [ApiController]
-public class CookingDayController : ControllerBase
+public class CookingDayController(ICookingDayService cookingDayService) : ControllerBase
 {
-    private readonly ICookingDayService _cookingDayService;
-    private readonly CookinUpDbContext _context;
-
-    public CookingDayController(ICookingDayService cookingDayService, CookinUpDbContext context)
-    {
-        _cookingDayService = cookingDayService;
-        _context = context;
-    }
-
     [Authorize]
     [HttpGet("{lobbyId}")]
     public async Task<IActionResult> GetCookingDaysForLobby(int lobbyId)
@@ -26,7 +15,7 @@ public class CookingDayController : ControllerBase
         try
         {
             var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
-            var cookingDays = await _cookingDayService.GetCookingDaysForLobby(requestingUserId, lobbyId);
+            var cookingDays = await cookingDayService.GetCookingDaysForLobby(requestingUserId, lobbyId);
             return Ok(cookingDays);
         }
         catch (UnauthorizedAccessException ex)
@@ -46,7 +35,7 @@ public class CookingDayController : ControllerBase
         try
         {
             var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
-            var result = await _cookingDayService.UpdateCookingDayDate(cookingDayId, newDate, requestingUserId);
+            var result = await cookingDayService.UpdateCookingDayDate(cookingDayId, newDate, requestingUserId);
             if (result)
                 return Ok("Data została zaktualizowana.");
             return BadRequest("Nie udało się zaktualizować daty.");
