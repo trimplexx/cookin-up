@@ -9,12 +9,13 @@ import {
   removeUserFromLobby,
   deleteLobby,
 } from '../api/lobbyApi';
-import Blacklist from '../components/Blacklist';
-import UsersInLobby from '../components/UsersInLobby';
+import Blacklist from '../components/lobby/Blacklist';
+import UsersInLobby from '../components/lobby/UsersInLobby';
 import { showToast } from '../utils/toastManager';
-import ToggleButton from '../components/ToggleButton';
-import AddItemModal from '../components/AddItemModal';
+import ToggleButton from '../components/common/ToggleButton';
+import AddItemModal from '../components/lobby/AddItemModal';
 import { FaTrash } from 'react-icons/fa';
+import RatingCategories from '../components/lobby/RatingCategories';
 
 const SingleLobbyPage = () => {
   const { id } = useParams();
@@ -38,6 +39,7 @@ const SingleLobbyPage = () => {
           err.message || 'Wystąpił błąd podczas ładowania lobby.',
           'error'
         );
+        navigate('/');
       } finally {
         setIsLoading(false);
       }
@@ -142,6 +144,26 @@ const SingleLobbyPage = () => {
     }
   };
 
+  const handleAddCategory = async (categoryName, type) => {
+    try {
+      if (type === 'meal') {
+        // Logika dodania kategorii posiłków
+      } else if (type === 'other') {
+        // Logika dodania innych kategorii
+      }
+
+      showToast('Kategoria została pomyślnie dodana.', 'success');
+      const updatedLobby = await getLobbyDetails(id);
+      setLobby(updatedLobby);
+      setModalOpen(false);
+    } catch (err) {
+      showToast(
+        err.message || 'Wystąpił błąd podczas dodawania kategorii.',
+        'error'
+      );
+    }
+  };
+
   if (isLoading) {
     return <SuspenseLoader />;
   }
@@ -158,6 +180,11 @@ const SingleLobbyPage = () => {
           label="Blacklist"
           onClick={() => handleTabClick('blacklist')}
           isActive={activeTab === 'blacklist'}
+        />
+        <ToggleButton
+          label="Kategorie ocen"
+          onClick={() => handleTabClick('ratingCategories')}
+          isActive={activeTab === 'ratingCategories'}
         />
 
         {lobby.isOwner && (
@@ -194,6 +221,21 @@ const SingleLobbyPage = () => {
                 'Dodawanie przedmiotu do Blacklisty',
                 'Podaj nazwę przedmiotu',
                 handleAddItemToBlacklist
+              )
+            }
+          />
+        )}
+        {activeTab === 'ratingCategories' && (
+          <RatingCategories
+            mealCategories={lobby.mealCategories}
+            otherCategories={lobby.otherCategories}
+            onAddCategoryClick={(categoryType) =>
+              handleOpenModal(
+                categoryType === 'meal'
+                  ? 'Dodawanie kategorii ocen posiłków'
+                  : 'Dodawanie kategorii innych ocen',
+                'Podaj nazwę kategorii',
+                (categoryName) => handleAddCategory(categoryName, categoryType)
               )
             }
           />

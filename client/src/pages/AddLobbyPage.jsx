@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createLobby } from '../api/lobbyApi';
 import { showToast } from '../utils/toastManager';
 import { useNavigate } from 'react-router-dom';
-import CreateLobbyForm from '../components/CreateLobbyForm';
+import CreateLobbyForm from '../components/lobby/CreateLobbyForm';
 
 const AddLobbyPage = () => {
   const navigate = useNavigate();

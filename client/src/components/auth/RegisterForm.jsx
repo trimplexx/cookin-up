@@ -1,7 +1,7 @@
-import PropTypes from "prop-types";
-import InputField from "./InputField";
-import FormButton from "./FormButton";
-import { NavLink } from "react-router-dom";
+import PropTypes from 'prop-types';
+import InputField from '../common/InputField';
+import FormButton from '../common/FormButton';
+import { NavLink } from 'react-router-dom';
 
 const RegisterForm = ({
   nick,
@@ -56,14 +56,14 @@ const RegisterForm = ({
         />
         <div className="flex justify-between items-center mb-6">
           <FormButton
-            label={isLoading ? "Przetwarzanie..." : "Zarejestruj się"}
+            label={isLoading ? 'Przetwarzanie...' : 'Zarejestruj się'}
             type="submit"
             isLoading={isLoading}
           />
         </div>
       </form>
       <p className="text-center text-gray-600 dark:text-gray-400 mt-4">
-        Masz już konto?{" "}
+        Masz już konto?{' '}
         <NavLink
           to="/logowanie"
           className="text-emerald-600 dark:text-emerald-300 hover:underline transition-colors"

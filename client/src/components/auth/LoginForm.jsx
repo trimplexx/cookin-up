@@ -1,7 +1,7 @@
-import PropTypes from "prop-types";
-import InputField from "./InputField";
-import FormButton from "./FormButton";
-import { NavLink } from "react-router-dom";
+import PropTypes from 'prop-types';
+import InputField from '../common/InputField';
+import FormButton from '../common/FormButton';
+import { NavLink } from 'react-router-dom';
 const LoginForm = ({
   email,
   setEmail,
@@ -34,14 +34,14 @@ const LoginForm = ({
         />
         <div className="flex justify-between items-center mb-6">
           <FormButton
-            label={isLoading ? "Przetwarzanie..." : "Zaloguj się"}
+            label={isLoading ? 'Przetwarzanie...' : 'Zaloguj się'}
             type="submit"
             isLoading={isLoading}
           />
         </div>
       </form>
       <p className="text-center text-gray-600 dark:text-gray-400 mt-4">
-        Nie masz konta?{" "}
+        Nie masz konta?{' '}
         <NavLink
           to="/rejestracja"
           className="text-emerald-600 dark:text-emerald-300 hover:underline transition-colors"

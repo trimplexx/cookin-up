@@ -1,11 +1,11 @@
-import { useState } from "react";
-import PropTypes from "prop-types";
-import InputField from "./InputField";
-import Button from "./Button";
-import { IoMdClose } from "react-icons/io";
+import { useState } from 'react';
+import PropTypes from 'prop-types';
+import InputField from '../common/InputField';
+import Button from '../common/Button';
+import { IoMdClose } from 'react-icons/io';
 
 const AddItemModal = ({ onClose, onAdd, placeholder, title }) => {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAdd = async () => {
@@ -13,7 +13,7 @@ const AddItemModal = ({ onClose, onAdd, placeholder, title }) => {
       setIsLoading(true);
       try {
         await onAdd(value);
-        setValue("");
+        setValue('');
       } finally {
         setIsLoading(false);
       }

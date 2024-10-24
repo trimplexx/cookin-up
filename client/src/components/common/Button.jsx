@@ -1,31 +1,27 @@
-import PropTypes from "prop-types";
-import clsx from "clsx";
-import { FaSpinner } from "react-icons/fa";
+import PropTypes from 'prop-types';
+import clsx from 'clsx';
+import { FaSpinner } from 'react-icons/fa';
 
 const Button = ({
   onClick,
   text,
   icon: Icon,
-  styleClass = "",
-  type = "button",
+  styleClass = '',
+  type = 'button',
   isLoading = false,
 }) => {
   return (
     <button
       onClick={onClick}
       className={clsx(
-        "px-4 py-2 rounded-lg flex items-center justify-center w-full h-full " +
+        'px-4 py-2 rounded-lg flex items-center justify-center w-full h-full ' +
           styleClass,
-        { "opacity-50 cursor-not-allowed": isLoading }
+        { 'opacity-50 cursor-not-allowed': isLoading }
       )}
       type={type}
       disabled={isLoading}
     >
-      {isLoading ? (
-        <FaSpinner className="animate-spin mr-2" />
-      ) : (
-        Icon && <Icon className="mr-2" />
-      )}
+      {isLoading ? <FaSpinner className="animate-spin" /> : Icon && <Icon />}
       {text}
     </button>
   );

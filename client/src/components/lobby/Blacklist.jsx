@@ -1,6 +1,6 @@
-import PropTypes from "prop-types";
-import { FaTrash, FaPlus } from "react-icons/fa";
-import Button from "./Button";
+import PropTypes from 'prop-types';
+import { FaTrash, FaPlus } from 'react-icons/fa';
+import Button from '../common/Button';
 
 const Blacklist = ({ blacklist, onRemoveItem, onAddItemClick }) => {
   return (

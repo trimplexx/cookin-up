@@ -1,6 +1,6 @@
-import PropTypes from "prop-types";
-import InputField from "./InputField";
-import FormButton from "./FormButton";
+import PropTypes from 'prop-types';
+import InputField from '../common/InputField';
+import FormButton from '../common/FormButton';
 
 const CreateLobbyForm = ({ lobbyName, setLobbyName, isLoading, onSubmit }) => {
   return (
@@ -15,7 +15,7 @@ const CreateLobbyForm = ({ lobbyName, setLobbyName, isLoading, onSubmit }) => {
       />
       <div className="flex justify-between items-center mb-6">
         <FormButton
-          label={isLoading ? "Tworzenie..." : "Stwórz lobby"}
+          label={isLoading ? 'Tworzenie...' : 'Stwórz lobby'}
           type="submit"
           isLoading={isLoading}
         />

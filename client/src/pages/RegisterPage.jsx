@@ -1,22 +1,22 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import RegisterForm from "../components/RegisterForm";
-import { showToast } from "../utils/toastManager";
-import { register } from "../api/authApi";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import RegisterForm from '../components/auth/RegisterForm';
+import { showToast } from '../utils/toastManager';
+import { register } from '../api/authApi';
 
 const RegisterPage = () => {
-  const [nick, setNick] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [nick, setNick] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
@@ -24,12 +24,12 @@ const RegisterPage = () => {
     e.preventDefault();
 
     if (!nick || !email || !password || !confirmPassword) {
-      showToast("Wszystkie pola muszą być wypełnione", "error");
+      showToast('Wszystkie pola muszą być wypełnione', 'error');
       return;
     }
 
     if (password !== confirmPassword) {
-      showToast("Hasła muszą być takie same", "error");
+      showToast('Hasła muszą być takie same', 'error');
       return;
     }
 
@@ -38,11 +38,11 @@ const RegisterPage = () => {
       const result = await register(nick, email, password);
 
       if (result) {
-        showToast("Rejestracja powiodła się", "success");
-        navigate("/logowanie");
+        showToast('Rejestracja powiodła się', 'success');
+        navigate('/logowanie');
       }
     } catch (error) {
-      showToast(error.message, "error");
+      showToast(error.message, 'error');
     } finally {
       setIsLoading(false);
     }
