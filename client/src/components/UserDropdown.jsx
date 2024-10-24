@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import PropTypes from "prop-types";
+import { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 
 const UserDropdown = ({
   userName,
@@ -26,20 +26,20 @@ const UserDropdown = ({
 
   useEffect(() => {
     if (menuVisible) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
     } else {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [menuVisible]);
 
   return (
     <div className="relative menu-container" ref={menuRef}>
       <p
-        className="text-xl font-extrabold text-center dark:text-white text-emerald-900 cursor-pointer"
+        className="text-xl font-extrabold text-center dark:text-white text-emerald-900 cursor-pointer hover:underline"
         onClick={toggleMenu}
       >
         {userName}

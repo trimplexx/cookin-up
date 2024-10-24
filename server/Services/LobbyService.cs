@@ -71,6 +71,8 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
 
         if (!isUserInLobby && lobby.CreatedByUserId != userId)
             throw new UnauthorizedAccessException("Nie masz dostępu do tego lobbyDto.");
+        
+        bool isOwner = lobby.CreatedByUserId == userId;
 
         var usersInLobby = await context.UsersInLobby
             .Where(ul => ul.LobbyId == lobbyId)
@@ -89,15 +91,17 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
                 Name = b.Name
             })
             .ToListAsync();
-
+        
         return new LobbyDetailsDto
         {
             LobbyId = lobby.Id,
             Name = lobby.Name,
             Users = usersInLobby,
-            Blacklist = blacklist
+            Blacklist = blacklist,
+            IsOwner = isOwner
         };
     }
+
 
     public async Task<List<LobbyDto>> GetLobbiesForUser(int userId)
     {

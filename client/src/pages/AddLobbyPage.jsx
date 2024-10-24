@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { createLobby } from "../api/lobbyApi";
-import { showToast } from "../utils/toastManager";
-import { useNavigate } from "react-router-dom";
-import CreateLobbyForm from "../components/CreateLobbyForm";
+import { useState } from 'react';
+import { createLobby } from '../api/lobbyApi';
+import { showToast } from '../utils/toastManager';
+import { useNavigate } from 'react-router-dom';
+import CreateLobbyForm from '../components/CreateLobbyForm';
 
 const AddLobbyPage = () => {
   const navigate = useNavigate();
-  const [lobbyName, setLobbyName] = useState("");
+  const [lobbyName, setLobbyName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateLobby = async (e) => {
@@ -15,12 +15,12 @@ const AddLobbyPage = () => {
     try {
       setIsLoading(true);
       await createLobby(lobbyName);
-      showToast.success("Lobby zostało pomyślnie utworzone.", "");
-      navigate("/");
+      showToast('Lobby zostało pomyślnie utworzone.', 'success');
+      navigate('/');
     } catch (error) {
       showToast(
-        error.message || "Wystąpił błąd podczas tworzenia lobby.",
-        "error"
+        error.message || 'Wystąpił błąd podczas tworzenia lobby.',
+        'error'
       );
     } finally {
       setIsLoading(false);

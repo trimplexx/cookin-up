@@ -6,4 +6,5 @@ public class LobbyDetailsDto
     public string Name { get; set; }
     public List<UserDto> Users { get; set; }
     public List<BlacklistDto> Blacklist { get; set; }
+    public bool IsOwner { get; set; }
 }
