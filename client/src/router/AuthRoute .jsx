@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import SuspenseLoader from '../components/SuspenseLoader';
+import SuspenseLoader from '../components/common/SuspenseLoader';
 import PropTypes from 'prop-types';
 
 const AuthRoute = ({ children }) => {

@@ -1,4 +1,6 @@
-﻿namespace server.Models.DTOs;
+﻿using server.Models.Db;
+
+namespace server.Models.DTOs;
 
 public class LobbyDetailsDto
 {
@@ -7,4 +9,6 @@ public class LobbyDetailsDto
     public List<UserDto> Users { get; set; }
     public List<BlacklistDto> Blacklist { get; set; }
     public bool IsOwner { get; set; }
+    public List<OtherCategories> OtherCategories { get; set; }
+    public List<MealCategories> MealCategories { get; set; }
 }

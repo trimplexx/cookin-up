@@ -54,7 +54,7 @@ public class AuthController : ControllerBase
             Expires = DateTime.UtcNow.AddDays(7)
         });
 
-        return Ok(new { result.AccessToken, result.RefreshToken });
+        return Ok(result);
     }
 
 

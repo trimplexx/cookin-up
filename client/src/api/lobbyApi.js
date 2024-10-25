@@ -142,3 +142,40 @@ export const removeUserFromLobby = async (lobbyId, userName) => {
     );
   }
 };
+
+export const addCategory = async (lobbyId, categoryName, categoryType) => {
+  try {
+    const response = await axios.post(clsx(apiUrl + '/lobby/addCategory'), {
+      lobbyId,
+      categoryName,
+      categoryType,
+    });
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    throw new Error(
+      error.response?.data || 'Wystąpił błąd podczas dodawania kategorii'
+    );
+  }
+};
+
+export const removeCategory = async (lobbyId, categoryId, categoryType) => {
+  try {
+    const response = await axios.delete(clsx(apiUrl + '/lobby/category'), {
+      data: { lobbyId, categoryId, categoryType },
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    throw new Error(
+      error.response?.data || 'Wystąpił błąd podczas usuwania kategorii'
+    );
+  }
+};

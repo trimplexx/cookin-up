@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { getUserLobbies } from "../api/lobbyApi";
 import { showToast } from "../utils/toastManager";
-import SuspenseLoader from "../components/SuspenseLoader";
-import RootPageLobbies from "../components/RootPageLobbies";
+import SuspenseLoader from "../components/common/SuspenseLoader";
+import RootPageLobbies from "../components/common/RootPageLobbies";
 import clsx from "clsx";
 
 const RootPage = () => {

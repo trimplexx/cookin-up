@@ -21,7 +21,11 @@ const Button = ({
       type={type}
       disabled={isLoading}
     >
-      {isLoading ? <FaSpinner className="animate-spin" /> : Icon && <Icon />}
+      {isLoading ? (
+        <FaSpinner className="animate-spin mr-2" />
+      ) : (
+        Icon && <Icon className={text ? 'mr-2' : ''} />
+      )}
       {text}
     </button>
   );

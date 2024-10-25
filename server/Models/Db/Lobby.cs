@@ -8,6 +8,7 @@ public class Lobby
     public Users CreatedByUser { get; set; }
     public ICollection<CookingDay> CookingDays { get; set; }
     public ICollection<UsersInLobby> UsersInLobbies { get; set; }
-    public ICollection<LobbyCategories> LobbyCategories { get; set; }
+    public ICollection<MealCategories> MealCategories { get; set; }
+    public ICollection<OtherCategories> OtherCategories { get; set; }
     public ICollection<Blacklist> Blacklists { get; set; }
 }

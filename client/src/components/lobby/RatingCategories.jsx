@@ -1,12 +1,68 @@
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import Button from '../common/Button';
-
+import CategoryList from './CategoryList ';
+import {
+  addCategory,
+  removeCategory,
+  getLobbyDetails,
+} from '../../api/lobbyApi';
+import { showToast } from '../../utils/toastManager';
 const RatingCategories = ({
-  mealCategories = [],
-  otherCategories = [],
-  onAddCategoryClick,
+  lobbyId,
+  lobby,
+  setLobby,
+  onOpenModal,
+  setOpenModal,
+  onOpenConfirmationModal,
 }) => {
+  const [categoryToRemove, setCategoryToRemove] = useState(null);
+
+  const handleAddCategory = async (categoryName, categoryType) => {
+    try {
+      await addCategory(lobbyId, categoryName, categoryType);
+      showToast('Kategoria została pomyślnie dodana.', 'success');
+      const updatedLobby = await getLobbyDetails(lobbyId);
+      setLobby(updatedLobby);
+      setOpenModal(false);
+    } catch (err) {
+      showToast(
+        err.message || 'Wystąpił błąd podczas dodawania kategorii.',
+        'error'
+      );
+    }
+  };
+
+  const handleRemoveCategory = async () => {
+    if (!categoryToRemove) return;
+    const { id, type } = categoryToRemove;
+    try {
+      await removeCategory(lobbyId, id, type);
+      showToast('Kategoria została usunięta.', 'success');
+      const updatedLobby = await getLobbyDetails(lobbyId);
+      setLobby(updatedLobby);
+    } catch (err) {
+      showToast(
+        err.message || 'Wystąpił błąd podczas usuwania kategorii.',
+        'error'
+      );
+    } finally {
+      setCategoryToRemove(null);
+    }
+  };
+
+  const openConfirmationModal = (categoryId, categoryType) => {
+    setCategoryToRemove({ id: categoryId, type: categoryType });
+    onOpenConfirmationModal(
+      'Czy na pewno chcesz usunąć tę kategorię?',
+      handleRemoveCategory
+    );
+  };
+
+  const mealCategories = lobby.mealCategories || [];
+  const otherCategories = lobby.otherCategories || [];
+
   return (
     <div className="bg-white dark:bg-neutral-800 sm:px-6 px-4 py-6 rounded-lg shadow-lg transform transition duration-200 hover:shadow-2xl flex-col">
       <h2 className="text-2xl font-bold text-emerald-600 dark:text-emerald-300 mb-4 w-full flex justify-center py-4">
@@ -20,30 +76,23 @@ const RatingCategories = ({
           </h3>
           <div className="w-10">
             <Button
-              onClick={() => onAddCategoryClick('meal')}
+              onClick={() =>
+                onOpenModal(
+                  'Dodawanie kategorii posiłków',
+                  'Podaj nazwę kategorii posiłków',
+                  (categoryName) => handleAddCategory(categoryName, 'meal')
+                )
+              }
               styleClass="bg-emerald-500 text-white hover:bg-emerald-600 flex items-center justify-center"
               icon={FaPlus}
             />
           </div>
         </div>
-        {mealCategories.length > 0 ? (
-          <ul className="list-none p-0 max-h-40 overflow-y-auto">
-            {mealCategories.map((category) => (
-              <li
-                key={category.id}
-                className="flex items-center justify-between p-2 border-b dark:border-neutral-700"
-              >
-                <span className="text-gray-700 dark:text-gray-300">
-                  {category.name}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-center text-gray-500 dark:text-gray-400 py-2">
-            Brak kategorii posiłków.
-          </p>
-        )}
+        <CategoryList
+          categories={mealCategories}
+          onRemoveCategory={(id) => openConfirmationModal(id, 'meal')}
+          categoryType="meal"
+        />
       </div>
 
       <div className="mb-4">
@@ -53,49 +102,35 @@ const RatingCategories = ({
           </h3>
           <div className="w-10">
             <Button
-              onClick={() => onAddCategoryClick('other')}
+              onClick={() =>
+                onOpenModal(
+                  'Dodawanie innych kategorii',
+                  'Podaj nazwę kategorii',
+                  (categoryName) => handleAddCategory(categoryName, 'other')
+                )
+              }
               styleClass="bg-emerald-500 text-white hover:bg-emerald-600 flex items-center justify-center"
               icon={FaPlus}
             />
           </div>
         </div>
-        {otherCategories.length > 0 ? (
-          <ul className="list-none p-0 max-h-40 overflow-y-auto">
-            {otherCategories.map((category) => (
-              <li
-                key={category.id}
-                className="flex items-center justify-between p-2 border-b dark:border-neutral-700"
-              >
-                <span className="text-gray-700 dark:text-gray-300">
-                  {category.name}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-center text-gray-500 dark:text-gray-400 py-4">
-            Brak innych kategorii.
-          </p>
-        )}
+        <CategoryList
+          categories={otherCategories}
+          onRemoveCategory={(id) => openConfirmationModal(id, 'other')}
+          categoryType="other"
+        />
       </div>
     </div>
   );
 };
 
 RatingCategories.propTypes = {
-  mealCategories: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-    })
-  ),
-  otherCategories: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-    })
-  ),
-  onAddCategoryClick: PropTypes.func.isRequired,
+  lobbyId: PropTypes.number.isRequired,
+  lobby: PropTypes.object.isRequired,
+  setLobby: PropTypes.func.isRequired,
+  onOpenModal: PropTypes.func.isRequired,
+  setOpenModal: PropTypes.func.isRequired,
+  onOpenConfirmationModal: PropTypes.func.isRequired,
 };
 
 export default RatingCategories;

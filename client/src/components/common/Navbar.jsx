@@ -1,32 +1,30 @@
-import DarkModeButton from '../components/DarkModeButton';
-import { useEffect, useState } from 'react';
+import DarkModeButton from './DarkModeButton';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { getUserName } from '../api/usersApi';
-import { showToast } from '../utils/toastManager';
+import { useAuth } from '../../hooks/useAuth';
+import { getUserName } from '../../api/usersApi';
+import { showToast } from '../../utils/toastManager';
 import UserDropdown from './UserDropdown';
 import { NavLink } from 'react-router-dom';
 
 const Navbar = () => {
-  const { handleLogout, isAuthenticated } = useAuth();
+  const { handleLogout, isAuthenticated, userName, updateUserName } = useAuth();
   const navigate = useNavigate();
-  const [userName, setUserName] = useState(localStorage.getItem('userName'));
 
   useEffect(() => {
     const fetchUserName = async () => {
       try {
         const fetchedUserName = await getUserName();
-        setUserName(fetchedUserName);
-        localStorage.setItem('userName', fetchedUserName);
+        updateUserName(fetchedUserName); 
       } catch (error) {
         showToast('Wystąpił błąd przy pobieraniu nazwy użytkownika.', 'error');
       }
     };
 
-    if (userName == 'undefined' && isAuthenticated) {
+    if ((!userName || userName === 'undefined') && isAuthenticated) {
       fetchUserName();
     }
-  }, [userName, isAuthenticated]);
+  }, [userName, isAuthenticated, updateUserName]);
 
   const handleChangeNick = () => {
     navigate('/zmien-nick');

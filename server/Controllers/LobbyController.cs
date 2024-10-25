@@ -9,6 +9,8 @@ namespace server.Controllers;
 [ApiController]
 public class LobbyController(ILobbyService lobbyService) : ControllerBase
 {
+    #region Lobby
+
     [Authorize]
     [HttpPut("create/{name}")]
     public async Task<IActionResult> CreateLobby(string name)
@@ -70,6 +72,38 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
     }
 
     [Authorize]
+    [HttpDelete("{lobbyId}")]
+    public async Task<IActionResult> DeleteLobby(int lobbyId)
+    {
+        try
+        {
+            var requestingUserId =
+                int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+            var result = await lobbyService.DeleteLobby(lobbyId, requestingUserId);
+            if (result)
+                return Ok("Lobby zostało usunięte.");
+            return BadRequest("Nie udało się usunąć lobbyDto.");
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "Wystąpił błąd podczas usuwania lobbyDto.");
+        }
+    }
+
+    #endregion
+
+
+    #region UserList
+
+    [Authorize]
     [HttpPost("addUser")]
     public async Task<IActionResult> AddUserToLobby(AddRemoveFromLobbyDto lobbyDto)
     {
@@ -96,6 +130,95 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
             return StatusCode(500, "Wystąpił błąd podczas dodawania użytkownika do lobbyDto.");
         }
     }
+
+    [Authorize]
+    [HttpDelete("userFromLobby")]
+    public async Task<IActionResult> RemoveUserFromLobby(AddRemoveFromLobbyDto lobbyDto)
+    {
+        try
+        {
+            var requestingUserId =
+                int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+
+            var result = await lobbyService.RemoveUserFromLobby(lobbyDto, requestingUserId);
+            if (result)
+                return Ok("Użytkownik został usunięty z lobbyDto.");
+
+            return BadRequest("Nie udało się usunąć użytkownika.");
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "Wystąpił błąd podczas usuwania użytkownika z lobbyDto.");
+        }
+    }
+
+    #endregion
+
+    #region CategoriesList
+
+    [Authorize]
+    [HttpPost("addCategory")]
+    public async Task<IActionResult> AddCategoryToLobbyByName(AddCategoryByNameDto categoryDto)
+    {
+        try
+        {
+            var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+            await lobbyService.AddCategoryToLobby(categoryDto, requestingUserId);
+            return Ok("Kategoria została dodana do lobby.");
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "Wystąpił błąd podczas dodawania kategorii do lobby.");
+        }
+    }
+
+    [Authorize]
+    [HttpDelete("category")]
+    public async Task<IActionResult> RemoveCategory(RemoveCategoryDto removeCategoryDto)
+    {
+        try
+        {
+            var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
+            var result = await lobbyService.RemoveCategory(removeCategoryDto, requestingUserId);
+
+            if (result)
+                return Ok("Kategoria została usunięta.");
+
+            return BadRequest("Nie udało się usunąć kategorii.");
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "Wystąpił błąd podczas usuwania kategorii.");
+        }
+    }
+
+    #endregion
+
+    #region Blacklist
 
     [Authorize]
     [HttpPost("addItemToBlacklist")]
@@ -155,59 +278,5 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         }
     }
 
-    [Authorize]
-    [HttpDelete("{lobbyId}")]
-    public async Task<IActionResult> DeleteLobby(int lobbyId)
-    {
-        try
-        {
-            var requestingUserId =
-                int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
-            var result = await lobbyService.DeleteLobby(lobbyId, requestingUserId);
-            if (result)
-                return Ok("Lobby zostało usunięte.");
-            return BadRequest("Nie udało się usunąć lobbyDto.");
-        }
-        catch (ArgumentException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, "Wystąpił błąd podczas usuwania lobbyDto.");
-        }
-    }
-
-    [Authorize]
-    [HttpDelete("userFromLobby")]
-    public async Task<IActionResult> RemoveUserFromLobby(AddRemoveFromLobbyDto lobbyDto)
-    {
-        try
-        {
-            var requestingUserId =
-                int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
-
-            var result = await lobbyService.RemoveUserFromLobby(lobbyDto, requestingUserId);
-            if (result)
-                return Ok("Użytkownik został usunięty z lobbyDto.");
-
-            return BadRequest("Nie udało się usunąć użytkownika.");
-        }
-        catch (ArgumentException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, "Wystąpił błąd podczas usuwania użytkownika z lobbyDto.");
-        }
-    }
+    #endregion
 }

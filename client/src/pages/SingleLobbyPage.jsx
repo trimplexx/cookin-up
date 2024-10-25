@@ -1,14 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import SuspenseLoader from '../components/SuspenseLoader';
-import {
-  getLobbyDetails,
-  addUserToLobby,
-  addItemToBlacklist,
-  removeItemFromBlacklist,
-  removeUserFromLobby,
-  deleteLobby,
-} from '../api/lobbyApi';
+import SuspenseLoader from '../components/common/SuspenseLoader';
+import { getLobbyDetails, deleteLobby } from '../api/lobbyApi';
 import Blacklist from '../components/lobby/Blacklist';
 import UsersInLobby from '../components/lobby/UsersInLobby';
 import { showToast } from '../utils/toastManager';
@@ -16,6 +9,7 @@ import ToggleButton from '../components/common/ToggleButton';
 import AddItemModal from '../components/lobby/AddItemModal';
 import { FaTrash } from 'react-icons/fa';
 import RatingCategories from '../components/lobby/RatingCategories';
+import { useConfirmation } from '../hooks/useConfirmation';
 
 const SingleLobbyPage = () => {
   const { id } = useParams();
@@ -26,6 +20,8 @@ const SingleLobbyPage = () => {
   const [modalPlaceholder, setModalPlaceholder] = useState('');
   const [title, setTitle] = useState('');
   const [onAddFunction, setOnAddFunction] = useState(null);
+  const openConfirmationModal = useConfirmation();
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,109 +55,23 @@ const SingleLobbyPage = () => {
     setModalOpen(true);
   };
 
-  const handleAddUser = async (userName) => {
-    try {
-      await addUserToLobby(id, userName);
-      showToast('Użytkownik został pomyślnie dodany do lobby.', 'success');
-      const updatedLobby = await getLobbyDetails(id);
-      setLobby(updatedLobby);
-      setModalOpen(false);
-    } catch (err) {
-      showToast(
-        err.message || 'Wystąpił błąd podczas dodawania użytkownika do lobby.',
-        'error'
-      );
-    }
+  const handleCloseModal = () => {
+    setModalOpen(false);
   };
 
-  const handleAddItemToBlacklist = async (itemName) => {
-    try {
-      await addItemToBlacklist(lobby.lobbyId, itemName);
-      showToast(
-        'Przedmiot został pomyślnie dodany do czarnej listy.',
-        'success'
-      );
-      const updatedLobby = await getLobbyDetails(id);
-      setLobby(updatedLobby);
-      setModalOpen(false);
-    } catch (err) {
-      showToast(
-        err.message ||
-          'Wystąpił błąd podczas dodawania przedmiotu do czarnej listy.',
-        'error'
-      );
-    }
-  };
-
-  const handleRemoveUser = async (userName) => {
-    try {
-      setIsLoading(true);
-      await removeUserFromLobby(lobby.lobbyId, userName);
-      showToast('Użytkownik został usunięty z lobby.', 'success');
-      const updatedLobby = await getLobbyDetails(id);
-      setLobby(updatedLobby);
-    } catch (err) {
-      showToast(
-        err.message || 'Wystąpił błąd podczas usuwania użytkownika z lobby.',
-        'error'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRemoveItemFromBlacklist = async (itemName) => {
-    try {
-      setIsLoading(true);
-      await removeItemFromBlacklist(lobby.lobbyId, itemName);
-      showToast('Przedmiot został usunięty z czarnej listy.', 'success');
-      const updatedLobby = await getLobbyDetails(id);
-      setLobby(updatedLobby);
-    } catch (err) {
-      showToast(
-        err.message ||
-          'Wystąpił błąd podczas usuwania przedmiotu z czarnej listy.',
-        'error'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteLobby = async () => {
-    try {
-      setIsLoading(true);
-      await deleteLobby(lobby.lobbyId);
-      showToast('Lobby zostało usunięte.', 'success');
-      navigate('/');
-    } catch (err) {
-      showToast(
-        err.message || 'Wystąpił błąd podczas usuwania lobby.',
-        'error'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAddCategory = async (categoryName, type) => {
-    try {
-      if (type === 'meal') {
-        // Logika dodania kategorii posiłków
-      } else if (type === 'other') {
-        // Logika dodania innych kategorii
+  const handleDeleteLobby = () => {
+    openConfirmationModal('Czy na pewno chcesz usunąć to lobby?', async () => {
+      try {
+        setIsLoading(true);
+        await deleteLobby(lobby.lobbyId);
+        showToast('Lobby zostało usunięte.', 'success');
+        navigate('/');
+      } catch (err) {
+        showToast(err.message || 'Błąd podczas usuwania lobby.', 'error');
+      } finally {
+        setIsLoading(false);
       }
-
-      showToast('Kategoria została pomyślnie dodana.', 'success');
-      const updatedLobby = await getLobbyDetails(id);
-      setLobby(updatedLobby);
-      setModalOpen(false);
-    } catch (err) {
-      showToast(
-        err.message || 'Wystąpił błąd podczas dodawania kategorii.',
-        'error'
-      );
-    }
+    });
   };
 
   if (isLoading) {
@@ -201,43 +111,32 @@ const SingleLobbyPage = () => {
       <div className="w-full max-w-3xl">
         {activeTab === 'users' && (
           <UsersInLobby
-            users={lobby.users}
-            onRemoveUser={(userName) => handleRemoveUser(userName)}
-            onAddUserClick={() =>
-              handleOpenModal(
-                'Dodawanie użytkownika do lobby',
-                'Podaj nazwę użytkownika',
-                handleAddUser
-              )
-            }
+            lobbyId={id}
+            lobby={lobby}
+            setLobby={setLobby}
+            onOpenModal={handleOpenModal}
+            setOpenModal={setModalOpen}
+            onOpenConfirmationModal={openConfirmationModal}
           />
         )}
         {activeTab === 'blacklist' && (
           <Blacklist
-            blacklist={lobby.blacklist}
-            onRemoveItem={(itemName) => handleRemoveItemFromBlacklist(itemName)}
-            onAddItemClick={() =>
-              handleOpenModal(
-                'Dodawanie przedmiotu do Blacklisty',
-                'Podaj nazwę przedmiotu',
-                handleAddItemToBlacklist
-              )
-            }
+            lobbyId={id}
+            lobby={lobby}
+            setLobby={setLobby}
+            onOpenModal={handleOpenModal}
+            setOpenModal={setModalOpen}
+            onOpenConfirmationModal={openConfirmationModal}
           />
         )}
         {activeTab === 'ratingCategories' && (
           <RatingCategories
-            mealCategories={lobby.mealCategories}
-            otherCategories={lobby.otherCategories}
-            onAddCategoryClick={(categoryType) =>
-              handleOpenModal(
-                categoryType === 'meal'
-                  ? 'Dodawanie kategorii ocen posiłków'
-                  : 'Dodawanie kategorii innych ocen',
-                'Podaj nazwę kategorii',
-                (categoryName) => handleAddCategory(categoryName, categoryType)
-              )
-            }
+            lobbyId={id}
+            lobby={lobby}
+            setLobby={setLobby}
+            onOpenModal={handleOpenModal}
+            setOpenModal={setModalOpen}
+            onOpenConfirmationModal={openConfirmationModal}
           />
         )}
       </div>
@@ -245,7 +144,7 @@ const SingleLobbyPage = () => {
       {isModalOpen && (
         <AddItemModal
           title={title}
-          onClose={() => setModalOpen(false)}
+          onClose={handleCloseModal}
           onAdd={onAddFunction}
           placeholder={modalPlaceholder}
         />

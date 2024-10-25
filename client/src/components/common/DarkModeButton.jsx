@@ -1,5 +1,5 @@
 import { MdNightlightRound, MdOutlineWbSunny } from 'react-icons/md';
-import useDarkMode from '../hooks/useDarkMode';
+import useDarkMode from '../../hooks/useDarkMode';
 
 const DarkModeButton = () => {
   const [darkMode, setDarkMode] = useDarkMode();

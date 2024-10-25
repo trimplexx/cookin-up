@@ -12,7 +12,6 @@ public class CookinUpDbContext : DbContext
     public DbSet<CookingDay> CookingDays { get; set; }
     public DbSet<Dishes> Dishes { get; set; }
     public DbSet<Lobby> Lobbies { get; set; }
-    public DbSet<LobbyCategories> LobbyCategories { get; set; }
     public DbSet<MealCategories> MealCategories { get; set; }
     public DbSet<OtherCategories> OtherCategories { get; set; }
     public DbSet<Reviews> Reviews { get; set; }
@@ -92,27 +91,6 @@ public class CookinUpDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // LobbyCategories
-        modelBuilder.Entity<LobbyCategories>(entity =>
-        {
-            entity.HasKey(lc => lc.Id);
-
-            entity.HasOne(lc => lc.Lobby)
-                .WithMany(l => l.LobbyCategories)
-                .HasForeignKey(lc => lc.LobbyId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(lc => lc.OtherCategory)
-                .WithMany()
-                .HasForeignKey(lc => lc.OtherCategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(lc => lc.MealCategories)
-                .WithMany()
-                .HasForeignKey(lc => lc.MealCategoriesId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
         // MealCategories
         modelBuilder.Entity<MealCategories>(entity =>
         {
@@ -120,6 +98,11 @@ public class CookinUpDbContext : DbContext
             entity.Property(mc => mc.Name)
                 .IsRequired()
                 .HasMaxLength(100);
+
+            entity.HasOne(mc => mc.Lobby)
+                .WithMany(l => l.MealCategories)
+                .HasForeignKey(mc => mc.LobbyId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // OtherCategories
@@ -129,6 +112,11 @@ public class CookinUpDbContext : DbContext
             entity.Property(oc => oc.Name)
                 .IsRequired()
                 .HasMaxLength(100);
+
+            entity.HasOne(oc => oc.Lobby)
+                .WithMany(l => l.OtherCategories)
+                .HasForeignKey(oc => oc.LobbyId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Reviews
@@ -198,7 +186,8 @@ public class CookinUpDbContext : DbContext
             entity.Property(rt => rt.RevokedAt)
                 .IsRequired();
         });
-        // Konfiguracja UserSession
+
+        // UserSession
         modelBuilder.Entity<UserSession>(entity =>
         {
             entity.HasKey(us => us.Id);

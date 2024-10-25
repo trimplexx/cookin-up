@@ -10,15 +10,19 @@ export const AuthProvider = ({ children }) => {
   const [accessToken, setAccessToken] = useState(
     localStorage.getItem('accessToken') || null
   );
+  const [userName, setUserName] = useState(
+    localStorage.getItem('userName') || null
+  );
   const [isAuthenticated, setIsAuthenticated] = useState(!!accessToken);
 
   const handleLogout = async () => {
     try {
       await logout();
-      setAccessToken(null);
-      setIsAuthenticated(false);
       localStorage.removeItem('accessToken');
       localStorage.removeItem('userName');
+      setAccessToken(null);
+      setUserName(null);
+      setIsAuthenticated(false);
       showToast('Pomyślnie wylogowano', 'success');
     } catch (error) {
       return null;
@@ -29,15 +33,25 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await login(email, password);
       const token = response.data.accessToken;
+      const name = response.data.userName;
+
       setAccessToken(token);
-      localStorage.setItem('accessToken', token);
+      setUserName(name);
       setIsAuthenticated(true);
-      localStorage.setItem('userName', response.data.userName);
+
+      localStorage.setItem('accessToken', token);
+      localStorage.setItem('userName', name);
+
       showToast('Pomyślnie zalogowano', 'success');
     } catch (error) {
       showToast('Nie udało się zalogować', 'error');
       setIsAuthenticated(false);
     }
+  };
+
+  const updateUserName = (newUserName) => {
+    setUserName(newUserName);
+    localStorage.setItem('userName', newUserName);
   };
 
   useEffect(() => {
@@ -46,6 +60,9 @@ export const AuthProvider = ({ children }) => {
     const handleStorageChange = (event) => {
       if (event.key === 'accessToken' && !event.newValue) {
         handleLogout();
+      }
+      if (event.key === 'userName') {
+        updateUserName();
       }
     };
 
@@ -60,9 +77,11 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         accessToken,
+        userName,
         isAuthenticated,
         handleLogin,
         handleLogout,
+        updateUserName,
       }}
     >
       {children}
