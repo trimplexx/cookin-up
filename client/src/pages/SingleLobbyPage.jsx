@@ -93,7 +93,7 @@ const SingleLobbyPage = () => {
 
   return (
     <div className="p-4 flex flex-col items-center w-full">
-      <div className="flex justify-center mb-4 space-x-4">
+      <div className="flex justify-center mb-4 space-x-4 flex-wrap">
         <ToggleButton
           label="Lista użytkowników"
           onClick={() => handleTabClick('users')}
