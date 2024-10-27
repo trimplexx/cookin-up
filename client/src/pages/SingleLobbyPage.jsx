@@ -93,27 +93,31 @@ const SingleLobbyPage = () => {
 
   return (
     <div className="p-4 flex flex-col items-center w-full">
-      <div className="flex justify-center mb-4 space-x-4 flex-wrap">
+      <div className="flex justify-center mb-4 flex-wrap gap-2">
         <ToggleButton
           label="Lista użytkowników"
           onClick={() => handleTabClick('users')}
           isActive={activeTab === 'users'}
+          className="w-full sm:w-auto px-2 py-1 text-center flex items-center justify-center space-x-2"
         />
         <ToggleButton
           label="Blacklist"
           onClick={() => handleTabClick('blacklist')}
           isActive={activeTab === 'blacklist'}
+          className="w-full sm:w-auto px-2 py-1 text-center flex items-center justify-center space-x-2"
         />
         <ToggleButton
           label="Kategorie ocen"
           onClick={() => handleTabClick('ratingCategories')}
           isActive={activeTab === 'ratingCategories'}
+          className="w-full sm:w-auto px-2 py-1 text-center flex items-center justify-center space-x-2"
         />
         {lobby.allReviewsSubmitted && (
           <ToggleButton
             label="Podsumowanie ocen"
             onClick={handleNavigateToSummary}
             isActive={false}
+            className="w-full sm:w-auto px-2 py-1 text-center flex items-center justify-center space-x-2"
           />
         )}
         {lobby.isOwner && (
@@ -121,8 +125,9 @@ const SingleLobbyPage = () => {
             onClick={handleDeleteLobby}
             isActive={false}
             label="Usuń lobby"
+            className="w-full sm:w-auto px-2 py-1 text-center flex items-center justify-center space-x-2"
           >
-            <FaTrash className="w-6 h-6 text-red-600" />
+            <FaTrash className="mx-auto w-5 h-5 text-red-600" />
           </ToggleButton>
         )}
       </div>
