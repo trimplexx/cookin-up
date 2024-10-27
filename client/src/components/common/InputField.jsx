@@ -1,5 +1,5 @@
-import PropTypes from "prop-types";
-import { useState } from "react";
+import PropTypes from 'prop-types';
+import { useState } from 'react';
 
 const InputField = ({
   id,
@@ -8,6 +8,7 @@ const InputField = ({
   placeholder,
   value,
   onChange,
+  onKeyDown,
   isPassword,
   autoComplete,
 }) => {
@@ -19,21 +20,24 @@ const InputField = ({
 
   return (
     <div className="relative mb-4">
-      <label
-        className="block text-gray-700 dark:text-gray-300 font-semibold mb-2"
-        htmlFor={id}
-      >
-        {label}
-      </label>
+      {label && (
+        <label
+          className="block text-gray-700 dark:text-gray-300 font-semibold mb-2"
+          htmlFor={id}
+        >
+          {label}
+        </label>
+      )}
       <div className="relative">
         <input
           id={id}
-          type={isPassword && !visible ? "password" : type}
+          type={isPassword && !visible ? 'password' : type}
           className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-neutral-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-300"
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          autoComplete={autoComplete || (isPassword ? "new-password" : "off")}
+          onKeyDown={onKeyDown}
+          autoComplete={autoComplete || (isPassword ? 'new-password' : 'off')}
         />
         {isPassword && (
           <button
@@ -41,7 +45,7 @@ const InputField = ({
             onClick={toggleVisibility}
             className="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-emerald-500 transition-colors"
           >
-            {visible ? "Ukryj" : "Pokaż"}
+            {visible ? 'Ukryj' : 'Pokaż'}
           </button>
         )}
       </div>
@@ -56,6 +60,7 @@ InputField.propTypes = {
   placeholder: PropTypes.string,
   value: PropTypes.string,
   onChange: PropTypes.func,
+  onKeyDown: PropTypes.func,
   isPassword: PropTypes.bool,
   autoComplete: PropTypes.string,
 };

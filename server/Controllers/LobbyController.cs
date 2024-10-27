@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using server.Interfaces;
 using server.Models.DTOs;
+using server.Static;
 
 namespace server.Controllers;
 
@@ -47,6 +48,7 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         }
     }
 
+    [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpGet("{lobbyId}/details")]
     public async Task<IActionResult> GetLobbyDetails(int lobbyId)
@@ -57,13 +59,13 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
             var lobbyDetails = await lobbyService.GetLobbyDetails(lobbyId, requestingUserId);
             return Ok(lobbyDetails);
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
-        }
         catch (ArgumentException ex)
         {
             return NotFound(ex.Message);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid("Brak uprawnień.");
         }
         catch (Exception)
         {
@@ -71,6 +73,7 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         }
     }
 
+    [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpDelete("{lobbyId}")]
     public async Task<IActionResult> DeleteLobby(int lobbyId)
@@ -88,9 +91,9 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         {
             return NotFound(ex.Message);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
-            return Forbid(ex.Message);
+            return Forbid("Brak uprawnień.");
         }
         catch (Exception)
         {
@@ -100,9 +103,9 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
 
     #endregion
 
-
     #region UserList
 
+    [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpPost("addUser")]
     public async Task<IActionResult> AddUserToLobby(AddRemoveFromLobbyDto lobbyDto)
@@ -131,6 +134,7 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         }
     }
 
+    [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpDelete("userFromLobby")]
     public async Task<IActionResult> RemoveUserFromLobby(AddRemoveFromLobbyDto lobbyDto)
@@ -164,6 +168,7 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
 
     #region CategoriesList
 
+    [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpPost("addCategory")]
     public async Task<IActionResult> AddCategoryToLobbyByName(AddCategoryByNameDto categoryDto)
@@ -178,9 +183,9 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         {
             return BadRequest(ex.Message);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
-            return Forbid(ex.Message);
+            return Forbid("Brak uprawnień.");
         }
         catch (Exception)
         {
@@ -188,6 +193,7 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         }
     }
 
+    [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpDelete("category")]
     public async Task<IActionResult> RemoveCategory(RemoveCategoryDto removeCategoryDto)
@@ -206,9 +212,9 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         {
             return NotFound(ex.Message);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
-            return Forbid(ex.Message);
+            return Forbid("Brak uprawnień.");
         }
         catch (Exception)
         {
@@ -220,6 +226,7 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
 
     #region Blacklist
 
+    [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpPost("addItemToBlacklist")]
     public async Task<IActionResult> AddItemToBlacklist(AddRemoveFromBlackListDto blackListDto)
@@ -236,13 +243,13 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid("Brak uprawnień.");
+        }
         catch (InvalidOperationException ex)
         {
             return Conflict(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
         }
         catch (Exception)
         {
@@ -250,6 +257,7 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         }
     }
 
+    [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpDelete("itemFromBlacklist")]
     public async Task<IActionResult> RemoveItemFromBlacklist(AddRemoveFromBlackListDto blackListDto)
@@ -268,9 +276,9 @@ public class LobbyController(ILobbyService lobbyService) : ControllerBase
         {
             return NotFound(ex.Message);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
-            return Forbid(ex.Message);
+            return Forbid("Brak uprawnień.");
         }
         catch (Exception)
         {

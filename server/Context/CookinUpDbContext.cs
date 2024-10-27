@@ -123,23 +123,43 @@ public class CookinUpDbContext : DbContext
         modelBuilder.Entity<Reviews>(entity =>
         {
             entity.HasKey(r => r.Id);
+
             entity.Property(r => r.Review)
                 .IsRequired()
                 .HasPrecision(2, 1)
                 .HasDefaultValue(0.0);
 
-            entity.HasOne(r => r.Dish)
-                .WithMany(d => d.Reviews)
-                .HasForeignKey(r => r.DishId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             entity.HasOne(r => r.UserWhoReview)
                 .WithMany()
                 .HasForeignKey(r => r.UserWhoReviewId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.CookingDay)
+                .WithMany()
+                .HasForeignKey(r => r.CookingDayId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.MealCategory)
+                .WithMany(mc => mc.Reviews)
+                .HasForeignKey(r => r.MealCategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.OtherCategory)
+                .WithMany(oc => oc.Reviews)
+                .HasForeignKey(r => r.OtherCategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.Lobby)
+                .WithMany(l => l.Reviews)
+                .HasForeignKey(r => r.LobbyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasCheckConstraint("CK_Reviews_OnlyOneCategory",
+                "(MealCategoryId IS NOT NULL AND OtherCategoryId IS NULL) OR " +
+                "(MealCategoryId IS NULL AND OtherCategoryId IS NOT NULL)");
         });
 
-        // Users
         modelBuilder.Entity<Users>(entity =>
         {
             entity.HasKey(u => u.Id);

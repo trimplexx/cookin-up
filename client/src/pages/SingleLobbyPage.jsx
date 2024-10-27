@@ -10,6 +10,7 @@ import AddItemModal from '../components/lobby/AddItemModal';
 import { FaTrash } from 'react-icons/fa';
 import RatingCategories from '../components/lobby/RatingCategories';
 import { useConfirmation } from '../hooks/useConfirmation';
+import CookingDayCard from '../components/lobby/CookingDayCard';
 
 const SingleLobbyPage = () => {
   const { id } = useParams();
@@ -21,7 +22,6 @@ const SingleLobbyPage = () => {
   const [title, setTitle] = useState('');
   const [onAddFunction, setOnAddFunction] = useState(null);
   const openConfirmationModal = useConfirmation();
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,6 +42,7 @@ const SingleLobbyPage = () => {
     };
 
     fetchLobbyDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleTabClick = (tab) => {
@@ -74,6 +75,18 @@ const SingleLobbyPage = () => {
     });
   };
 
+  const handleNavigateToCookingDay = (cookingDayId, isCurrentUser) => {
+    navigate(
+      isCurrentUser
+        ? `/${id}/dzien-gotowania/${cookingDayId}/edytuj`
+        : `/${id}/dzien-gotowania/${cookingDayId}`
+    );
+  };
+
+  const handleNavigateToSummary = () => {
+    navigate(`/lobby/${id}/summary`);
+  };
+
   if (isLoading) {
     return <SuspenseLoader />;
   }
@@ -96,7 +109,13 @@ const SingleLobbyPage = () => {
           onClick={() => handleTabClick('ratingCategories')}
           isActive={activeTab === 'ratingCategories'}
         />
-
+        {lobby.allReviewsSubmitted && (
+          <ToggleButton
+            label="Podsumowanie ocen"
+            onClick={handleNavigateToSummary}
+            isActive={false}
+          />
+        )}
         {lobby.isOwner && (
           <ToggleButton
             onClick={handleDeleteLobby}
@@ -117,6 +136,7 @@ const SingleLobbyPage = () => {
             onOpenModal={handleOpenModal}
             setOpenModal={setModalOpen}
             onOpenConfirmationModal={openConfirmationModal}
+            isOwner={lobby.isOwner}
           />
         )}
         {activeTab === 'blacklist' && (
@@ -139,6 +159,30 @@ const SingleLobbyPage = () => {
             onOpenConfirmationModal={openConfirmationModal}
           />
         )}
+      </div>
+
+      <div className="w-full max-w-3xl mt-6">
+        {lobby?.users?.map((user, index) => (
+          <CookingDayCard
+            key={index}
+            name={user.userName}
+            content={
+              user.isCurrentUser
+                ? 'Edytuj swój dzień'
+                : user.cookingDayDate
+                  ? new Date(user.cookingDayDate).toLocaleDateString('pl-PL', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })
+                  : 'Brak daty'
+            }
+            onClick={() =>
+              handleNavigateToCookingDay(user.cookingDayId, user.isCurrentUser)
+            }
+            isCurrentUser={user.isCurrentUser}
+          />
+        ))}
       </div>
 
       {isModalOpen && (

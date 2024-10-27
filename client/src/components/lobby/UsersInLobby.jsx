@@ -15,6 +15,7 @@ const UsersInLobby = ({
   onOpenModal,
   setOpenModal,
   onOpenConfirmationModal,
+  isOwner,
 }) => {
   const handleAddUser = async (userName) => {
     try {
@@ -67,13 +68,15 @@ const UsersInLobby = ({
               <span className="text-gray-700 dark:text-gray-300">
                 {user.userName}
               </span>
-              <div>
-                <Button
-                  onClick={() => openUserConfirmationModal(user.userName)}
-                  styleClass="text-red-500 hover:text-red-700"
-                  icon={FaTrash}
-                />
-              </div>
+              {isOwner && (
+                <div>
+                  <Button
+                    onClick={() => openUserConfirmationModal(user.userName)}
+                    styleClass="text-red-500 hover:text-red-700"
+                    icon={FaTrash}
+                  />
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -107,6 +110,7 @@ UsersInLobby.propTypes = {
   onOpenModal: PropTypes.func.isRequired,
   setOpenModal: PropTypes.func.isRequired,
   onOpenConfirmationModal: PropTypes.func.isRequired,
+  isOwner: PropTypes.bool.isRequired,
 };
 
 export default UsersInLobby;

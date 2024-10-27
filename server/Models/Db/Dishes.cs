@@ -9,5 +9,4 @@ public class Dishes
     public CookingDay? CookingDay { get; set; }
     public int MealCategoryId { get; set; }
     public MealCategories? MealCategory { get; set; }
-    public ICollection<Reviews>? Reviews { get; set; }
 }

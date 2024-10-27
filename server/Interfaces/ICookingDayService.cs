@@ -4,6 +4,6 @@ namespace server.Interfaces;
 
 public interface ICookingDayService
 {
-    Task<List<CookingDayDto>> GetCookingDaysForLobby(int userId, int lobbyId);
-    Task<bool> UpdateCookingDayDate(int cookingDayId, DateTime newDate, int userId);
+    Task<bool> UpdateCookingDay(int cookingDayId, UpdateCookingDayRequestDto request, int userId);
+    Task<CookingDayDetailsDto> GetCookingDayDetails(int userId, int cookingDayId);
 }

@@ -9,4 +9,5 @@ public class MealCategories
     public Lobby Lobby { get; set; }
 
     public ICollection<Dishes> Dishes { get; set; }
+    public ICollection<Reviews> Reviews { get; set; }
 }

@@ -180,7 +180,16 @@ namespace server.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("DishId")
+                    b.Property<int>("CookingDayId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LobbyId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MealCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OtherCategoryId")
                         .HasColumnType("int");
 
                     b.Property<double>("Review")
@@ -194,11 +203,20 @@ namespace server.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DishId");
+                    b.HasIndex("CookingDayId");
+
+                    b.HasIndex("LobbyId");
+
+                    b.HasIndex("MealCategoryId");
+
+                    b.HasIndex("OtherCategoryId");
 
                     b.HasIndex("UserWhoReviewId");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", t =>
+                        {
+                            t.HasCheckConstraint("CK_Reviews_OnlyOneCategory", "(MealCategoryId IS NOT NULL AND OtherCategoryId IS NULL) OR (MealCategoryId IS NULL AND OtherCategoryId IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("server.Models.Db.RevokedToken", b =>
@@ -382,11 +400,27 @@ namespace server.Migrations
 
             modelBuilder.Entity("server.Models.Db.Reviews", b =>
                 {
-                    b.HasOne("server.Models.Db.Dishes", "Dish")
-                        .WithMany("Reviews")
-                        .HasForeignKey("DishId")
+                    b.HasOne("server.Models.Db.CookingDay", "CookingDay")
+                        .WithMany()
+                        .HasForeignKey("CookingDayId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("server.Models.Db.Lobby", "Lobby")
+                        .WithMany("Reviews")
+                        .HasForeignKey("LobbyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("server.Models.Db.MealCategories", "MealCategory")
+                        .WithMany("Reviews")
+                        .HasForeignKey("MealCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("server.Models.Db.OtherCategories", "OtherCategory")
+                        .WithMany("Reviews")
+                        .HasForeignKey("OtherCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("server.Models.Db.Users", "UserWhoReview")
                         .WithMany()
@@ -394,7 +428,13 @@ namespace server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Dish");
+                    b.Navigation("CookingDay");
+
+                    b.Navigation("Lobby");
+
+                    b.Navigation("MealCategory");
+
+                    b.Navigation("OtherCategory");
 
                     b.Navigation("UserWhoReview");
                 });
@@ -434,11 +474,6 @@ namespace server.Migrations
                     b.Navigation("Dishes");
                 });
 
-            modelBuilder.Entity("server.Models.Db.Dishes", b =>
-                {
-                    b.Navigation("Reviews");
-                });
-
             modelBuilder.Entity("server.Models.Db.Lobby", b =>
                 {
                     b.Navigation("Blacklists");
@@ -449,12 +484,21 @@ namespace server.Migrations
 
                     b.Navigation("OtherCategories");
 
+                    b.Navigation("Reviews");
+
                     b.Navigation("UsersInLobbies");
                 });
 
             modelBuilder.Entity("server.Models.Db.MealCategories", b =>
                 {
                     b.Navigation("Dishes");
+
+                    b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("server.Models.Db.OtherCategories", b =>
+                {
+                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("server.Models.Db.Users", b =>

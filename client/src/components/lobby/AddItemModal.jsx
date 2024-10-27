@@ -20,6 +20,12 @@ const AddItemModal = ({ onClose, onAdd, placeholder, title }) => {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleAdd();
+    }
+  };
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -47,6 +53,7 @@ const AddItemModal = ({ onClose, onAdd, placeholder, title }) => {
           placeholder={placeholder}
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
         <div className="flex w-full justify-center gap-2 h-12">
           <Button

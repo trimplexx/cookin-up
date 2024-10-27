@@ -11,4 +11,5 @@ public class Lobby
     public ICollection<MealCategories> MealCategories { get; set; }
     public ICollection<OtherCategories> OtherCategories { get; set; }
     public ICollection<Blacklist> Blacklists { get; set; }
+    public ICollection<Reviews> Reviews { get; set; }
 }

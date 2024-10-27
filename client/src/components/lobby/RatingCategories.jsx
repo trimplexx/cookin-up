@@ -125,7 +125,7 @@ const RatingCategories = ({
 };
 
 RatingCategories.propTypes = {
-  lobbyId: PropTypes.number.isRequired,
+  lobbyId: PropTypes.string.isRequired,
   lobby: PropTypes.object.isRequired,
   setLobby: PropTypes.func.isRequired,
   onOpenModal: PropTypes.func.isRequired,

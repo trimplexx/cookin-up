@@ -7,4 +7,5 @@ public class OtherCategories
     public int LobbyId { get; set; }
 
     public Lobby Lobby { get; set; }
+    public ICollection<Reviews> Reviews { get; set; }
 }

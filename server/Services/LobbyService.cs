@@ -68,12 +68,6 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
         if (lobby == null)
             throw new ArgumentException("Podane lobby nie istnieje.");
 
-        var isUserInLobby = await context.UsersInLobby
-            .AnyAsync(ul => ul.UserId == userId && ul.LobbyId == lobbyId);
-
-        if (!isUserInLobby && lobby.CreatedByUserId != userId)
-            throw new UnauthorizedAccessException("Nie masz dostępu do tego lobby.");
-
         var isOwner = lobby.CreatedByUserId == userId;
 
         var usersInLobby = await context.UsersInLobby
@@ -81,9 +75,45 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
             .Select(ul => new UserDto
             {
                 UserId = ul.User.Id,
-                UserName = ul.User.Name
+                UserName = ul.User.Name,
+                IsCurrentUser = ul.User.Id == userId,
+                CookingDayId = context.CookingDays
+                    .Where(cd => cd.UserId == ul.User.Id && cd.LobbyId == lobbyId)
+                    .Select(cd => cd.Id)
+                    .FirstOrDefault(),
+                CookingDayDate = context.CookingDays
+                    .Where(cd => cd.UserId == ul.User.Id && cd.LobbyId == lobbyId)
+                    .Select(cd => cd.Date)
+                    .FirstOrDefault()
             })
             .ToListAsync();
+
+        if (!usersInLobby.Any(u => u.UserId == lobby.CreatedByUserId))
+        {
+            var owner = await context.Users
+                .Where(u => u.Id == lobby.CreatedByUserId)
+                .Select(u => new UserDto
+                {
+                    UserId = u.Id,
+                    UserName = u.Name,
+                    IsCurrentUser = u.Id == userId,
+                    CookingDayId = context.CookingDays
+                        .Where(cd => cd.UserId == u.Id && cd.LobbyId == lobbyId)
+                        .Select(cd => cd.Id)
+                        .FirstOrDefault(),
+                    CookingDayDate = context.CookingDays
+                        .Where(cd => cd.UserId == u.Id && cd.LobbyId == lobbyId)
+                        .Select(cd => cd.Date)
+                        .FirstOrDefault()
+                })
+                .FirstOrDefaultAsync();
+
+            if (owner != null) usersInLobby.Add(owner);
+        }
+
+        usersInLobby = usersInLobby
+            .OrderByDescending(u => u.IsCurrentUser)
+            .ToList();
 
         var blacklist = await context.Blacklist
             .Where(b => b.LobbyId == lobbyId)
@@ -112,6 +142,14 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
             })
             .ToListAsync();
 
+        var expectedReviewCount = (mealCategories.Count + otherCategories.Count) * usersInLobby.Count *
+                                  (usersInLobby.Count - 1);
+
+        var actualReviewCount = await context.Reviews
+            .CountAsync(r => r.LobbyId == lobbyId);
+
+        var allReviewsSubmitted = actualReviewCount == expectedReviewCount;
+
         return new LobbyDetailsDto
         {
             LobbyId = lobby.Id,
@@ -120,7 +158,8 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
             Blacklist = blacklist,
             IsOwner = isOwner,
             OtherCategories = otherCategories,
-            MealCategories = mealCategories
+            MealCategories = mealCategories,
+            AllReviewsSubmitted = allReviewsSubmitted
         };
     }
 
@@ -180,15 +219,12 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
                 var user = await context.Users.SingleOrDefaultAsync(u => u.Name == lobbyDto.userName);
                 if (user == null) throw new ArgumentException("Taki użytkownik nie istnieje.");
                 var lobby = await context.Lobbies.FindAsync(lobbyDto.lobbyId);
-                if (lobby == null) throw new ArgumentException("Podane lobbyDto nie istnieje.");
+                if (lobby == null) throw new ArgumentException("Podane lobby nie istnieje.");
 
                 var isUserInLobby = await context.UsersInLobby
                     .AnyAsync(ul => ul.UserId == user.Id && ul.LobbyId == lobbyDto.lobbyId);
 
-                if (isUserInLobby) throw new InvalidOperationException("Użytkownik już znajduje się w tym lobbyDto.");
-
-                if (lobby.CreatedByUserId != requestingUserId)
-                    throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia tego lobbyDto.");
+                if (isUserInLobby) throw new InvalidOperationException("Użytkownik już znajduje się w tym lobby.");
 
                 var userInLobby = new UsersInLobby
                 {
@@ -208,7 +244,24 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
                 context.CookingDays.Add(cookingDay);
                 await context.SaveChangesAsync();
 
+                var mealCategories = await context.MealCategories
+                    .Where(mc => mc.LobbyId == lobbyDto.lobbyId)
+                    .ToListAsync();
+
+                foreach (var category in mealCategories)
+                {
+                    var dish = new Dishes
+                    {
+                        CookingDayId = cookingDay.Id,
+                        MealCategoryId = category.Id,
+                        Name = category.Name
+                    };
+                    context.Dishes.Add(dish);
+                }
+
+                await context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
                 return true;
             }
             catch (Exception)
@@ -249,21 +302,42 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
 
     public async Task AddCategoryToLobby(AddCategoryByNameDto categoryDto, int userId)
     {
-        var lobby = await context.Lobbies.FirstOrDefaultAsync(l => l.Id == categoryDto.LobbyId);
+        var lobby = await context.Lobbies
+            .Include(l => l.UsersInLobbies)
+            .FirstOrDefaultAsync(l => l.Id == categoryDto.LobbyId);
 
         if (lobby == null)
             throw new ArgumentException("Lobby o podanym ID nie istnieje.");
 
-        var isUserInLobby = await context.UsersInLobby
-            .AnyAsync(ul => ul.UserId == userId && ul.LobbyId == categoryDto.LobbyId);
-
-        if (!isUserInLobby && lobby.CreatedByUserId != userId)
-            throw new UnauthorizedAccessException("Brak dostępu do tego lobby.");
 
         if (categoryDto.CategoryType == "meal")
         {
             var mealCategory = new MealCategories { Name = categoryDto.CategoryName, LobbyId = categoryDto.LobbyId };
             await context.MealCategories.AddAsync(mealCategory);
+            await context.SaveChangesAsync();
+
+            var userIdsInLobby = lobby.UsersInLobbies
+                .Select(ul => ul.UserId)
+                .Append(lobby.CreatedByUserId)
+                .Distinct()
+                .ToList();
+
+            foreach (var userIdInLobby in userIdsInLobby)
+            {
+                var cookingDay = await context.CookingDays
+                    .FirstOrDefaultAsync(cd => cd.UserId == userIdInLobby && cd.LobbyId == categoryDto.LobbyId);
+
+                if (cookingDay != null)
+                {
+                    var dish = new Dishes
+                    {
+                        CookingDayId = cookingDay.Id,
+                        MealCategoryId = mealCategory.Id,
+                        Name = categoryDto.CategoryName
+                    };
+                    context.Dishes.Add(dish);
+                }
+            }
         }
         else if (categoryDto.CategoryType == "other")
         {
@@ -272,20 +346,18 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
         }
         else
         {
-            throw new ArgumentException("Podano zły typ kateogrii");
+            throw new ArgumentException("Podano zły typ kategorii.");
         }
 
         await context.SaveChangesAsync();
     }
+
 
     public async Task<bool> RemoveCategory(RemoveCategoryDto removeCategoryDto, int requestingUserId)
     {
         var lobby = await context.Lobbies.FindAsync(removeCategoryDto.lobbyId);
         if (lobby == null)
             throw new ArgumentException("Podane lobby nie istnieje.");
-
-        if (lobby.CreatedByUserId != requestingUserId)
-            throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia kategorii.");
 
         if (removeCategoryDto.categoryType.Equals("meal", StringComparison.OrdinalIgnoreCase))
         {
@@ -327,12 +399,6 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
             b.Name == blackListDto.itemName && b.LobbyId == blackListDto.lobbyId);
         if (item) throw new ArgumentException("Taki item znajduje się już na liście w lobbyDto.");
 
-        var isUserInLobby = await context.UsersInLobby
-            .AnyAsync(ul => ul.UserId == requestingUserId && ul.LobbyId == blackListDto.lobbyId);
-
-        if (isUserInLobby)
-            throw new UnauthorizedAccessException("Nie masz uprawnień.");
-
         var newItem = new Blacklist
         {
             Name = blackListDto.itemName,
@@ -350,9 +416,6 @@ public class LobbyService(CookinUpDbContext context) : ILobbyService
         var lobby = await context.Lobbies.FindAsync(blackListDto.lobbyId);
         if (lobby == null)
             throw new ArgumentException("Podane lobbyDto nie istnieje.");
-
-        if (lobby.CreatedByUserId != requestingUserId)
-            throw new UnauthorizedAccessException("Nie masz uprawnień do usunięcia przedmiotu z czarnej listy.");
 
         var item = await context.Blacklist.FirstOrDefaultAsync(b =>
             b.Name == blackListDto.itemName && b.LobbyId == blackListDto.lobbyId);

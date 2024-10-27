@@ -1,5 +1,4 @@
 ﻿using server.Interfaces;
-using server.Models.DTOs;
 using server.Services;
 
 namespace server.Static;
@@ -15,5 +14,7 @@ public static class ServiceRegistration
         services.AddScoped<ILobbyService, LobbyService>();
         services.AddScoped<ICookingDayService, CookingDayService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IRatingService, RatingService>();
+        services.AddScoped<LobbyAuthorizationFilter>();
     }
 }
