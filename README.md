@@ -1,7 +1,5 @@
 # Cookin' Up 🍲
 
-## English Version
-
 Welcome to **Cookin' Up** — a web application that recreates the fun of the popular Polish TV show, "Ugotowani." This platform enables you and your friends to create a "Cookin' Up" lobby, where you can:
 
 - Invite friends to join the fun.
