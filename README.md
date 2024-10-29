@@ -134,7 +134,7 @@ This guide provides steps for setting up the server environment, installing depe
    ```
 
 2. **API Preview**:
-   - When running in development mode, Swagger UI will be available at [http://localhost:5000/swagger](http://localhost:5194/swagger).
+   - When running in development mode, Swagger UI will be available at [http://localhost:5194/swagger](http://localhost:5194/swagger).
    - For production, the application will automatically redirect to HTTPS.
 
 ## CORS Configuration
