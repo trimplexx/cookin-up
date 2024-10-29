@@ -24,40 +24,40 @@ You can access the demo of this application here: [cookinup.lkrawczyk.pl](https:
 
 ### Registriation:
 
-![img_2.png](img_2.png)
+![image](https://github.com/user-attachments/assets/49f195ff-0d67-4945-9846-cb58b49ad5ef)
 
 ### Login:
 
-![img_1.png](img_1.png)
+![image](https://github.com/user-attachments/assets/afa6eb3d-a942-43e9-8b0c-d11c32f74c63)
 
 ### Root Page:
 
-![img_3.png](img_3.png)
+![image](https://github.com/user-attachments/assets/e1633b3b-9c6e-4dab-9f5c-1e8cae0aa2e8)
 
 ### Lobby:
 
-![img_4.png](img_4.png)
+![image](https://github.com/user-attachments/assets/11e36700-42b6-4c67-b96a-41ea6b796694)
 
 ### User List:
 
-![img_5.png](img_5.png)
+![image](https://github.com/user-attachments/assets/898dda7a-fb1e-4030-9f6c-b8ffe63e0b03)
 
 ### Blacklist:
 
-![img_6.png](img_6.png)
+![image](https://github.com/user-attachments/assets/bf10d3a1-a30e-4d88-90ed-1710f355fddb)
 
 ### Rating Categories:
 
-![img_7.png](img_7.png)
+![image](https://github.com/user-attachments/assets/283278ed-a214-418f-9230-7218040818f6)
 
 ### Edit day page:
 
-![img_8.png](img_8.png)
+![image](https://github.com/user-attachments/assets/27478dd5-7078-491f-b3ab-edb23b6a9d89)
 
 ### Rating the day:
 
-![img_9.png](img_9.png)
+![image](https://github.com/user-attachments/assets/d051a60c-1c00-4daa-bd7b-46f39e53b478)
 
 ### Summary page:
 
-![img_10.png](img_10.png)
+![image](https://github.com/user-attachments/assets/495fe015-03be-40c0-b1fe-1f7c1b967304)
