@@ -5,6 +5,8 @@ public class Reviews
     public int Id { get; set; }
     public double Review { get; set; }
 
+    public string? Comment { get; set; }
+
     public int UserWhoReviewId { get; set; }
     public Users? UserWhoReview { get; set; }
 

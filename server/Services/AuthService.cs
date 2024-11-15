@@ -12,19 +12,11 @@ using server.Models.DTOs;
 
 namespace server.Services;
 
-public class AuthService : IAuthService
+public class AuthService(CookinUpDbContext context, IConfiguration configuration) : IAuthService
 {
     private const int SaltSize = 16;
     private const int HashSize = 32;
     private const int HashIterations = 10000;
-    private readonly IConfiguration _configuration;
-    private readonly CookinUpDbContext _context;
-
-    public AuthService(CookinUpDbContext context, IConfiguration configuration)
-    {
-        _context = context;
-        _configuration = configuration;
-    }
 
     public async Task<bool> Register(UserRegisterDto userRegisterDto)
     {
@@ -42,9 +34,9 @@ public class AuthService : IAuthService
             throw new ArgumentException(
                 "Hasło musi zawierać co najmniej 8 znaków, jedną wielką literę, jedną cyfrę i jeden znak specjalny.");
 
-        if (await _context.Users.AnyAsync(u => u.Email == userRegisterDto.Email))
+        if (await context.Users.AnyAsync(u => u.Email == userRegisterDto.Email))
             throw new InvalidOperationException("Użytkownik z takim adresem email już istnieje");
-        if (await _context.Users.AnyAsync(u => u.Name == userRegisterDto.Name))
+        if (await context.Users.AnyAsync(u => u.Name == userRegisterDto.Name))
             throw new InvalidOperationException("Użytkownik z takim nickiem już istnieje");
 
         var salt = GenerateSalt();
@@ -58,15 +50,15 @@ public class AuthService : IAuthService
             Password = $"{Convert.ToBase64String(salt)}:{hashedPassword}"
         };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
 
         return true;
     }
 
     public async Task<AuthResponseDto?> Login(UserLoginDto userLoginDto)
     {
-        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == userLoginDto.Email);
+        var user = await context.Users.SingleOrDefaultAsync(u => u.Email == userLoginDto.Email);
         if (user == null) return null;
 
         var passwordParts = user.Password.Split(':');
@@ -78,10 +70,10 @@ public class AuthService : IAuthService
         var accessToken = GenerateJwtToken(user);
         var refreshToken = GenerateRefreshToken();
 
-        var expiredSessions = await _context.UserSessions
+        var expiredSessions = await context.UserSessions
             .Where(us => us.UserId == user.Id && us.RefreshTokenExpiryTime < DateTime.UtcNow)
             .ToListAsync();
-        _context.UserSessions.RemoveRange(expiredSessions);
+        context.UserSessions.RemoveRange(expiredSessions);
 
         var newSession = new UserSession
         {
@@ -91,8 +83,8 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow
         };
 
-        await _context.UserSessions.AddAsync(newSession);
-        await _context.SaveChangesAsync();
+        await context.UserSessions.AddAsync(newSession);
+        await context.SaveChangesAsync();
 
         return new AuthResponseDto
         {
@@ -106,10 +98,10 @@ public class AuthService : IAuthService
         string accessToken)
     {
         var isRevoked =
-            await _context.RevokedTokens.AnyAsync(rt => rt.Token == refreshToken || rt.Token == accessToken);
+            await context.RevokedTokens.AnyAsync(rt => rt.Token == refreshToken || rt.Token == accessToken);
         if (isRevoked) return null;
 
-        var userSession = await _context.UserSessions
+        var userSession = await context.UserSessions
             .Include(us => us.User)
             .SingleOrDefaultAsync(us => us.RefreshToken == refreshToken);
 
@@ -118,7 +110,7 @@ public class AuthService : IAuthService
         var jwtHandler = new JwtSecurityTokenHandler();
         try
         {
-            var jwtKey = _configuration.GetSection("jwtKey").Value;
+            var jwtKey = configuration.GetSection("jwtKey").Value;
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!));
 
             jwtHandler.ValidateToken(accessToken, new TokenValidationParameters
@@ -146,7 +138,7 @@ public class AuthService : IAuthService
         userSession.RefreshToken = newRefreshToken;
         userSession.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
         return (newJwtToken, newRefreshToken);
     }
@@ -154,10 +146,10 @@ public class AuthService : IAuthService
 
     public async Task Logout(string? accessToken, string? refreshToken)
     {
-        var userSession = await _context.UserSessions.SingleOrDefaultAsync(us => us.RefreshToken == refreshToken);
-        if (userSession != null) _context.UserSessions.Remove(userSession);
+        var userSession = await context.UserSessions.SingleOrDefaultAsync(us => us.RefreshToken == refreshToken);
+        if (userSession != null) context.UserSessions.Remove(userSession);
 
-        var isRevokedAccessToken = await _context.RevokedTokens.AnyAsync(rt => rt.Token == accessToken);
+        var isRevokedAccessToken = await context.RevokedTokens.AnyAsync(rt => rt.Token == accessToken);
         if (!isRevokedAccessToken && !string.IsNullOrEmpty(accessToken))
         {
             var revokedTokenJwt = new RevokedToken
@@ -165,10 +157,10 @@ public class AuthService : IAuthService
                 Token = accessToken,
                 RevokedAt = DateTime.UtcNow
             };
-            await _context.RevokedTokens.AddAsync(revokedTokenJwt);
+            await context.RevokedTokens.AddAsync(revokedTokenJwt);
         }
 
-        var isRevokedRefreshToken = await _context.RevokedTokens.AnyAsync(rt => rt.Token == refreshToken);
+        var isRevokedRefreshToken = await context.RevokedTokens.AnyAsync(rt => rt.Token == refreshToken);
         if (!isRevokedRefreshToken && !string.IsNullOrEmpty(refreshToken))
         {
             var revokedTokenRefresh = new RevokedToken
@@ -176,10 +168,10 @@ public class AuthService : IAuthService
                 Token = refreshToken,
                 RevokedAt = DateTime.UtcNow
             };
-            await _context.RevokedTokens.AddAsync(revokedTokenRefresh);
+            await context.RevokedTokens.AddAsync(revokedTokenRefresh);
         }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     private string GenerateRefreshToken()
@@ -201,7 +193,7 @@ public class AuthService : IAuthService
             new Claim("Id", user.Id.ToString()),
             new Claim("Name", user.Name)
         };
-        var jwtKey = _configuration.GetSection("jwtKey").Value;
+        var jwtKey = configuration.GetSection("jwtKey").Value;
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expires = DateTime.UtcNow.AddMinutes(15);

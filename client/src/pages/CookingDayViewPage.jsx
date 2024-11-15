@@ -30,6 +30,12 @@ const CookingDayViewPage = () => {
                   review.categoryId === category.id &&
                   review.categoryType === 'OtherCategory'
               )?.rating || 0,
+            comment:
+              response.userReviews?.find(
+                (review) =>
+                  review.categoryId === category.id &&
+                  review.categoryType === 'OtherCategory'
+              )?.comment || '',
           }))
         );
 
@@ -44,6 +50,12 @@ const CookingDayViewPage = () => {
                     review.categoryId === category.id &&
                     review.categoryType === 'MealCategory'
                 )?.rating || 0,
+              comment:
+                response.userReviews?.find(
+                  (review) =>
+                    review.categoryId === category.id &&
+                    review.categoryType === 'MealCategory'
+                )?.comment || '',
             }))
           )
         );
@@ -60,12 +72,27 @@ const CookingDayViewPage = () => {
     fetchCookingDayDetails();
   }, [id, navigate, lobbyId]);
 
-  const handleRateCategory = async (categoryId, rating, categoryType) => {
+  const handleRateCategory = async (
+    categoryId,
+    rating,
+    categoryType,
+    comment
+  ) => {
     try {
-      await rateCategory(categoryId, categoryType, rating, lobbyId, id);
+      setIsLoading(true);
+      await rateCategory(
+        categoryId,
+        categoryType,
+        rating,
+        lobbyId,
+        id,
+        comment
+      );
       showToast('Oceniono kategorię na ' + rating, 'success');
     } catch (err) {
       showToast('Błąd podczas oceniania kategorii.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,6 +123,7 @@ const CookingDayViewPage = () => {
             mealCategoryId={dish.mealCategoryId}
             onRate={handleRateCategory}
             initialRating={dish.rating}
+            initialComment={dish.comment}
           />
         ))}
       </div>
@@ -110,6 +138,7 @@ const CookingDayViewPage = () => {
             category={category}
             onRate={handleRateCategory}
             initialRating={category.rating}
+            initialComment={category.comment}
           />
         ))}
       </div>

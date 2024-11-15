@@ -6,18 +6,11 @@ using server.Models.DTOs;
 
 namespace server.Services;
 
-public class RatingService : IRatingService
+public class RatingService(CookinUpDbContext context) : IRatingService
 {
-    private readonly CookinUpDbContext _context;
-
-    public RatingService(CookinUpDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<LobbyRatingsSummaryDto> GetLobbyRatingsSummary(int lobbyId)
     {
-        var lobby = await _context.Lobbies
+        var lobby = await context.Lobbies
             .Include(l => l.CreatedByUser)
             .Include(l => l.UsersInLobbies)
             .ThenInclude(ul => ul.User)
@@ -40,37 +33,55 @@ public class RatingService : IRatingService
         var expectedReviewCount = (mealCategories.Count + otherCategories.Count) * usersInLobby.Count *
                                   (usersInLobby.Count - 1);
 
-        var actualReviewCount = await _context.Reviews
+        var actualReviewCount = await context.Reviews
             .CountAsync(r => r.LobbyId == lobbyId);
 
-        var allReviewsSubmitted = actualReviewCount == expectedReviewCount;
-
-        if (!allReviewsSubmitted)
+        if (actualReviewCount < expectedReviewCount)
             throw new InvalidOperationException("Nie wszystkie oceny zostały jeszcze wystawione.");
 
-        var reviews = await _context.Reviews
+        var reviews = await context.Reviews
             .Where(r => r.LobbyId == lobbyId)
+            .Include(r => r.UserWhoReview)
+            .Include(r => r.CookingDay)
             .ToListAsync();
 
         var userRatingsSummary = usersInLobby.Select(user => new UserRatingSummaryDto
         {
             UserId = user.Id,
             UserName = user.Name,
-            MealCategoryRatings = mealCategories.Select(mealCategory => new CategoryAverageDto
+            MealCategoryRatings = mealCategories.Select(mealCategory => new CategoryAverageWithCommentsDto
             {
                 CategoryId = mealCategory.Id,
                 CategoryName = mealCategory.Name,
                 AverageRating = reviews
-                    .Where(r => r.UserWhoReviewId == user.Id && r.MealCategoryId == mealCategory.Id)
-                    .Average(r => (double?)r.Review) ?? 0
+                    .Where(r => r.MealCategoryId == mealCategory.Id && r.CookingDay!.UserId == user.Id)
+                    .Average(r => (double?)r.Review) ?? 0,
+                Comments = reviews
+                    .Where(r => r.MealCategoryId == mealCategory.Id && r.CookingDay!.UserId == user.Id &&
+                                r.Comment != null)
+                    .Select(r => new UserCommentDto
+                    {
+                        UserName = r.UserWhoReview?.Name ?? "Anonim",
+                        Comment = r.Comment
+                    })
+                    .ToList()
             }).ToList(),
-            OtherCategoryRatings = otherCategories.Select(otherCategory => new CategoryAverageDto
+            OtherCategoryRatings = otherCategories.Select(otherCategory => new CategoryAverageWithCommentsDto
             {
                 CategoryId = otherCategory.Id,
                 CategoryName = otherCategory.Name,
                 AverageRating = reviews
-                    .Where(r => r.UserWhoReviewId == user.Id && r.OtherCategoryId == otherCategory.Id)
-                    .Average(r => (double?)r.Review) ?? 0
+                    .Where(r => r.OtherCategoryId == otherCategory.Id && r.CookingDay!.UserId == user.Id)
+                    .Average(r => (double?)r.Review) ?? 0,
+                Comments = reviews
+                    .Where(r => r.OtherCategoryId == otherCategory.Id && r.CookingDay!.UserId == user.Id &&
+                                r.Comment != null)
+                    .Select(r => new UserCommentDto
+                    {
+                        UserName = r.UserWhoReview?.Name ?? "Anonim",
+                        Comment = r.Comment
+                    })
+                    .ToList()
             }).ToList()
         }).ToList();
 
@@ -91,11 +102,11 @@ public class RatingService : IRatingService
 
         if (rateCategoryRequest.CategoryType == "meal")
         {
-            var mealCategory = await _context.MealCategories.FindAsync(rateCategoryRequest.CategoryId);
+            var mealCategory = await context.MealCategories.FindAsync(rateCategoryRequest.CategoryId);
             if (mealCategory == null)
                 throw new ArgumentException("Kategoria posiłków nie została znaleziona.");
 
-            existingReview = await _context.Reviews.FirstOrDefaultAsync(r =>
+            existingReview = await context.Reviews.FirstOrDefaultAsync(r =>
                 r.UserWhoReviewId == requestingUserId &&
                 r.MealCategoryId == rateCategoryRequest.CategoryId &&
                 r.CookingDayId == rateCategoryRequest.CookingDayId);
@@ -107,24 +118,26 @@ public class RatingService : IRatingService
                     MealCategoryId = rateCategoryRequest.CategoryId,
                     UserWhoReviewId = requestingUserId,
                     Review = rateCategoryRequest.Rating,
+                    Comment = rateCategoryRequest.Comment,
                     LobbyId = rateCategoryRequest.LobbyId,
                     CookingDayId = rateCategoryRequest.CookingDayId
                 };
-                _context.Reviews.Add(existingReview);
+                context.Reviews.Add(existingReview);
             }
             else
             {
                 existingReview.Review = rateCategoryRequest.Rating;
-                _context.Reviews.Update(existingReview);
+                existingReview.Comment = rateCategoryRequest.Comment;
+                context.Reviews.Update(existingReview);
             }
         }
         else if (rateCategoryRequest.CategoryType == "other")
         {
-            var otherCategory = await _context.OtherCategories.FindAsync(rateCategoryRequest.CategoryId);
+            var otherCategory = await context.OtherCategories.FindAsync(rateCategoryRequest.CategoryId);
             if (otherCategory == null)
                 throw new ArgumentException("Inna kategoria nie została znaleziona.");
 
-            existingReview = await _context.Reviews.FirstOrDefaultAsync(r =>
+            existingReview = await context.Reviews.FirstOrDefaultAsync(r =>
                 r.UserWhoReviewId == requestingUserId &&
                 r.OtherCategoryId == rateCategoryRequest.CategoryId &&
                 r.CookingDayId == rateCategoryRequest.CookingDayId);
@@ -136,15 +149,17 @@ public class RatingService : IRatingService
                     OtherCategoryId = rateCategoryRequest.CategoryId,
                     UserWhoReviewId = requestingUserId,
                     Review = rateCategoryRequest.Rating,
+                    Comment = rateCategoryRequest.Comment,
                     LobbyId = rateCategoryRequest.LobbyId,
                     CookingDayId = rateCategoryRequest.CookingDayId
                 };
-                _context.Reviews.Add(existingReview);
+                context.Reviews.Add(existingReview);
             }
             else
             {
                 existingReview.Review = rateCategoryRequest.Rating;
-                _context.Reviews.Update(existingReview);
+                existingReview.Comment = rateCategoryRequest.Comment;
+                context.Reviews.Update(existingReview);
             }
         }
         else
@@ -152,7 +167,7 @@ public class RatingService : IRatingService
             throw new ArgumentException("Nieprawidłowy typ kategorii.");
         }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
         return true;
     }

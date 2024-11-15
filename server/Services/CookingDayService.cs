@@ -7,20 +7,11 @@ using server.Models.DTOs;
 
 namespace server.Services;
 
-public class CookingDayService : ICookingDayService
+public class CookingDayService(CookinUpDbContext context, IConfiguration configuration) : ICookingDayService
 {
-    private readonly IConfiguration _configuration;
-    private readonly CookinUpDbContext _context;
-
-    public CookingDayService(CookinUpDbContext context, IConfiguration configuration)
-    {
-        _context = context;
-        _configuration = configuration;
-    }
-
     public async Task<CookingDayDetailsDto> GetCookingDayDetails(int userId, int cookingDayId)
     {
-        var cookingDay = await _context.CookingDays
+        var cookingDay = await context.CookingDays
             .Include(cd => cd.Dishes)!
             .ThenInclude(d => d.MealCategory)
             .Include(cd => cd.User)
@@ -29,11 +20,11 @@ public class CookingDayService : ICookingDayService
         if (cookingDay == null)
             throw new UnauthorizedAccessException("Brak dostępu do wybranego dnia gotowania.");
 
-        var mealCategories = await _context.MealCategories
+        var mealCategories = await context.MealCategories
             .Where(mc => mc.LobbyId == cookingDay.LobbyId)
             .ToListAsync();
 
-        var otherCategories = await _context.OtherCategories
+        var otherCategories = await context.OtherCategories
             .Where(oc => oc.LobbyId == cookingDay.LobbyId)
             .Select(oc => new OtherCategories
             {
@@ -42,7 +33,7 @@ public class CookingDayService : ICookingDayService
             })
             .ToListAsync();
 
-        var blobConnectionString = _configuration["blobContainerCon"];
+        var blobConnectionString = configuration["blobContainerCon"];
         var blobServiceClient = new BlobServiceClient(blobConnectionString);
         var containerClient = blobServiceClient.GetBlobContainerClient("cookingday-images");
 
@@ -65,9 +56,9 @@ public class CookingDayService : ICookingDayService
 
         var userReviews = new List<ReviewDto>();
         if (cookingDay.UserId != userId)
-            userReviews = await _context.Reviews
+            userReviews = await context.Reviews
                 .Where(r => r.UserWhoReviewId == userId &&
-                            r.CookingDayId == cookingDayId && // Dodano CookingDayId
+                            r.CookingDayId == cookingDayId &&
                             ((r.MealCategoryId != null &&
                               mealCategories.Select(mc => mc.Id).Contains(r.MealCategoryId.Value)) ||
                              (r.OtherCategoryId != null &&
@@ -76,6 +67,7 @@ public class CookingDayService : ICookingDayService
                 {
                     ReviewId = r.Id,
                     Rating = r.Review,
+                    Comment = r.Comment ?? "",
                     CategoryId = r.MealCategoryId ?? r.OtherCategoryId ?? 0,
                     CategoryType = r.MealCategoryId != null ? "MealCategory" : "OtherCategory"
                 })
@@ -98,7 +90,7 @@ public class CookingDayService : ICookingDayService
 
     public async Task<bool> UpdateCookingDay(int cookingDayId, UpdateCookingDayRequestDto request, int userId)
     {
-        var cookingDay = await _context.CookingDays
+        var cookingDay = await context.CookingDays
             .Include(cd => cd.Dishes)
             .FirstOrDefaultAsync(cd => cd.Id == cookingDayId);
 
@@ -111,7 +103,7 @@ public class CookingDayService : ICookingDayService
         if (request.NewDate.HasValue)
             cookingDay.Date = request.NewDate.Value;
 
-        var blobConnectionString = _configuration["blobContainerCon"];
+        var blobConnectionString = configuration["blobContainerCon"];
         var blobServiceClient = new BlobServiceClient(blobConnectionString);
         var containerClient = blobServiceClient.GetBlobContainerClient("cookin-up-blob");
 
@@ -152,7 +144,7 @@ public class CookingDayService : ICookingDayService
                 }
             }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return true;
     }
 
