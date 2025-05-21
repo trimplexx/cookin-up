@@ -129,6 +129,9 @@ public class CookinUpDbContext : DbContext
                 .HasPrecision(2, 1)
                 .HasDefaultValue(0.0);
 
+            entity.Property(r => r.Comment)
+                .HasMaxLength(225); // Ustawienie ograniczenia długości
+
             entity.HasOne(r => r.UserWhoReview)
                 .WithMany()
                 .HasForeignKey(r => r.UserWhoReviewId)

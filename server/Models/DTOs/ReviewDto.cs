@@ -6,4 +6,5 @@ public class ReviewDto
     public double Rating { get; set; }
     public int CategoryId { get; set; }
     public string CategoryType { get; set; }
+    public string Comment { get; set; }
 }

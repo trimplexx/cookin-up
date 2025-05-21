@@ -6,7 +6,8 @@ export const rateCategory = async (
   categoryType,
   rating,
   lobbyId,
-  id
+  id,
+  comment
 ) => {
   try {
     const response = await axios.post(`${apiUrl}/rating/rateCategory`, {
@@ -15,6 +16,7 @@ export const rateCategory = async (
       rating,
       lobbyId,
       cookingDayId: id,
+      comment,
     });
     if (response.status === 200) {
       return response.data;

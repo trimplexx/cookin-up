@@ -1,7 +1,22 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
+import CommentsModal from './CommentsModal'; // Importujemy modal
 
 const RankingTable = ({ userRatings, isShuffling }) => {
+  const [selectedComments, setSelectedComments] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleShowComments = (comments) => {
+    setSelectedComments(comments);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedComments([]);
+  };
+
   return (
     <div className="w-full max-w-6xl overflow-x-auto text-md sm:text-lg">
       <table className="min-w-full bg-white dark:bg-neutral-800 rounded-lg shadow-lg overflow-hidden">
@@ -12,22 +27,9 @@ const RankingTable = ({ userRatings, isShuffling }) => {
             <th className="py-2 px-3 sm:py-3 sm:px-6 text-right">
               Średnia ocena
             </th>
-            {userRatings[0].mealCategoryRatings.map((category, index) => (
-              <th
-                key={`meal-cat-${index}`}
-                className="py-2 px-3 sm:py-3 sm:px-6 text-center hidden sm:table-cell"
-              >
-                Kategoria {category.categoryName}
-              </th>
-            ))}
-            {userRatings[0].otherCategoryRatings.map((category, index) => (
-              <th
-                key={`other-cat-${index}`}
-                className="py-2 px-3 sm:py-3 sm:px-6 text-center hidden sm:table-cell"
-              >
-                Kategoria {category.categoryName}
-              </th>
-            ))}
+            <th className="py-2 px-3 sm:py-3 sm:px-6 text-center">
+              Komentarze
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -52,26 +54,30 @@ const RankingTable = ({ userRatings, isShuffling }) => {
               <td className="py-3 px-3 sm:px-6 text-right">
                 {userRating.totalAverageRating}
               </td>
-              {userRating.mealCategoryRatings.map((mealRating, idx) => (
-                <td
-                  key={`meal-${idx}`}
-                  className="py-3 px-3 sm:px-6 text-center hidden sm:table-cell"
+              <td className="py-3 px-3 sm:px-6 text-center">
+                <button
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
+                  onClick={() =>
+                    handleShowComments([
+                      ...userRating.mealCategoryRatings.flatMap(
+                        (cat) => cat.comments
+                      ),
+                      ...userRating.otherCategoryRatings.flatMap(
+                        (cat) => cat.comments
+                      ),
+                    ])
+                  }
                 >
-                  {mealRating.averageRating}
-                </td>
-              ))}
-              {userRating.otherCategoryRatings.map((otherRating, idx) => (
-                <td
-                  key={`other-${idx}`}
-                  className="py-3 px-3 sm:px-6 text-center hidden sm:table-cell"
-                >
-                  {otherRating.averageRating}
-                </td>
-              ))}
+                  Pokaż
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {isModalOpen && (
+        <CommentsModal comments={selectedComments} onClose={handleCloseModal} />
+      )}
     </div>
   );
 };

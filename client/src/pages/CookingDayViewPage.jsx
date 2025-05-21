@@ -6,6 +6,7 @@ import { getCookingDayDetails } from '../api/cookingDayApi';
 import { rateCategory } from '../api/ratingApi';
 import OtherCategoryTile from '../components/lobby/OtherCategoryCardView';
 import DishCardView from '../components/lobby/DishCardView';
+import { useCallback } from 'react';
 
 const CookingDayViewPage = () => {
   const { id, lobbyId } = useParams();
@@ -15,57 +16,86 @@ const CookingDayViewPage = () => {
   const [dishes, setDishes] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCookingDayDetails = async () => {
-      try {
-        setIsLoading(true);
-        const response = await getCookingDayDetails(id);
-        setCookingDay(response);
-        setCategories(
-          (response.otherCategories || []).map((category) => ({
-            ...category,
+  const fetchCookingDayDetails = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await getCookingDayDetails(id);
+      setCookingDay(response);
+      setCategories(
+        (response.otherCategories || []).map((category) => ({
+          ...category,
+          rating:
+            response.userReviews?.find(
+              (review) =>
+                review.categoryId === category.id &&
+                review.categoryType === 'OtherCategory'
+            )?.rating || 0,
+          comment:
+            response.userReviews?.find(
+              (review) =>
+                review.categoryId === category.id &&
+                review.categoryType === 'OtherCategory'
+            )?.comment || '',
+        }))
+      );
+
+      setDishes(
+        response.mealCategories.flatMap((category) =>
+          category.dishes.map((dish) => ({
+            ...dish,
+            mealCategoryId: category.id,
             rating:
               response.userReviews?.find(
                 (review) =>
                   review.categoryId === category.id &&
-                  review.categoryType === 'OtherCategory'
+                  review.categoryType === 'MealCategory'
               )?.rating || 0,
+            comment:
+              response.userReviews?.find(
+                (review) =>
+                  review.categoryId === category.id &&
+                  review.categoryType === 'MealCategory'
+              )?.comment || '',
           }))
-        );
-
-        setDishes(
-          response.mealCategories.flatMap((category) =>
-            category.dishes.map((dish) => ({
-              ...dish,
-              mealCategoryId: category.id,
-              rating:
-                response.userReviews?.find(
-                  (review) =>
-                    review.categoryId === category.id &&
-                    review.categoryType === 'MealCategory'
-                )?.rating || 0,
-            }))
-          )
-        );
-      } catch (err) {
-        showToast(
-          err.message || 'Błąd ładowania szczegółów dnia gotowania.',
-          'error'
-        );
-        navigate('/lobby/' + lobbyId);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCookingDayDetails();
+        )
+      );
+    } catch (err) {
+      showToast(
+        err.message || 'Błąd ładowania szczegółów dnia gotowania.',
+        'error'
+      );
+      navigate('/lobby/' + lobbyId);
+    } finally {
+      setIsLoading(false);
+    }
   }, [id, navigate, lobbyId]);
 
-  const handleRateCategory = async (categoryId, rating, categoryType) => {
+  useEffect(() => {
+    fetchCookingDayDetails();
+  }, [id, navigate, lobbyId, fetchCookingDayDetails]);
+
+  const handleRateCategory = async (
+    categoryId,
+    rating,
+    categoryType,
+    comment
+  ) => {
     try {
-      await rateCategory(categoryId, categoryType, rating, lobbyId, id);
+      setIsLoading(true);
+      await rateCategory(
+        categoryId,
+        categoryType,
+        rating,
+        lobbyId,
+        id,
+        comment
+      );
+      await fetchCookingDayDetails();
       showToast('Oceniono kategorię na ' + rating, 'success');
     } catch (err) {
       showToast('Błąd podczas oceniania kategorii.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,6 +126,7 @@ const CookingDayViewPage = () => {
             mealCategoryId={dish.mealCategoryId}
             onRate={handleRateCategory}
             initialRating={dish.rating}
+            initialComment={dish.comment}
           />
         ))}
       </div>
@@ -110,6 +141,7 @@ const CookingDayViewPage = () => {
             category={category}
             onRate={handleRateCategory}
             initialRating={category.rating}
+            initialComment={category.comment}
           />
         ))}
       </div>

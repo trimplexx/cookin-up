@@ -7,4 +7,5 @@ public class RateCategoryRequestDto
     public double Rating { get; set; }
     public int LobbyId { get; set; }
     public int CookingDayId { get; set; }
+    public string? Comment { get; set; }
 }

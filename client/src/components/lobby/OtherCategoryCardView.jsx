@@ -3,13 +3,22 @@ import { FaStar } from 'react-icons/fa';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
 
-const OtherCategoryCardView = ({ category, onRate, initialRating }) => {
+const OtherCategoryCardView = ({
+  category,
+  onRate,
+  initialRating,
+  initialComment,
+}) => {
   const [rating, setRating] = useState(initialRating);
   const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState(initialComment || '');
 
   const handleRating = (newRating) => {
     setRating(newRating);
-    onRate(category.id, newRating, 'other');
+  };
+
+  const handleSubmit = () => {
+    onRate(category.id, rating, 'other', comment);
   };
 
   return (
@@ -37,6 +46,20 @@ const OtherCategoryCardView = ({ category, onRate, initialRating }) => {
           );
         })}
       </div>
+
+      <textarea
+        className="w-full mt-2 p-2 border border-gray-300 rounded text-neutral-800  dark:bg-neutral-700 dark:text-white"
+        placeholder="Dodaj komentarz..."
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+      ></textarea>
+
+      <button
+        onClick={handleSubmit}
+        className="mt-2 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 "
+      >
+        Wyślij ocenę i komentarz za kategorię
+      </button>
     </div>
   );
 };
@@ -48,6 +71,7 @@ OtherCategoryCardView.propTypes = {
   }).isRequired,
   onRate: PropTypes.func.isRequired,
   initialRating: PropTypes.number.isRequired,
+  initialComment: PropTypes.string,
 };
 
 export default OtherCategoryCardView;

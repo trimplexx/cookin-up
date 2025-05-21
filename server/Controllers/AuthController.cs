@@ -7,21 +7,14 @@ namespace server.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController : ControllerBase
+public class AuthController(IAuthService authService) : ControllerBase
 {
-    private readonly IAuthService _authService;
-
-    public AuthController(IAuthService authService)
-    {
-        _authService = authService;
-    }
-
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegisterDto userRegisterDto)
     {
         try
         {
-            var result = await _authService.Register(userRegisterDto);
+            var result = await authService.Register(userRegisterDto);
             if (!result) throw new Exception();
             return Ok("Rejestracja powiodła się.");
         }
@@ -42,7 +35,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(UserLoginDto userLoginDto)
     {
-        var result = await _authService.Login(userLoginDto);
+        var result = await authService.Login(userLoginDto);
 
         if (result == null) return Unauthorized("Nieprawidłowe dane logowania.");
 
@@ -70,7 +63,7 @@ public class AuthController : ControllerBase
 
             var accessToken = authorizationHeader.Substring("Bearer ".Length).Trim();
 
-            var tokens = await _authService.RefreshToken(refreshToken, accessToken);
+            var tokens = await authService.RefreshToken(refreshToken, accessToken);
             if (tokens == null) return BadRequest("Błąd generowania nowych tokenów");
 
             Response.Cookies.Append("refreshToken", tokens.Value.refreshToken, new CookieOptions
@@ -92,7 +85,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
-            return BadRequest("Brak refreshToken w ciasteczkach.");
+            return Ok("Brak refreshToken w ciasteczkach.");
 
         Response.Cookies.Delete("refreshToken");
 
@@ -101,7 +94,7 @@ public class AuthController : ControllerBase
         if (!string.IsNullOrEmpty(authorizationHeader) && authorizationHeader.StartsWith("Bearer "))
             accessToken = authorizationHeader.Substring("Bearer ".Length).Trim();
 
-        await _authService.Logout(accessToken, refreshToken);
+        await authService.Logout(accessToken, refreshToken);
 
         return Ok("Wylogowanie powiodło się.");
     }

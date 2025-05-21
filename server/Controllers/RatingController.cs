@@ -8,15 +8,8 @@ namespace server.Controllers;
 
 [Route("api/rating")]
 [ApiController]
-public class RatingController : ControllerBase
+public class RatingController(IRatingService ratingService) : ControllerBase
 {
-    private readonly IRatingService _ratingService;
-
-    public RatingController(IRatingService ratingService)
-    {
-        _ratingService = ratingService;
-    }
-
     [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpPost("rateCategory")]
@@ -25,7 +18,7 @@ public class RatingController : ControllerBase
         try
         {
             var requestingUserId = int.Parse(User.FindFirst("Id")?.Value ?? throw new UnauthorizedAccessException());
-            var result = await _ratingService.RateCategory(rateCategoryRequest, requestingUserId);
+            var result = await ratingService.RateCategory(rateCategoryRequest, requestingUserId);
 
             if (result)
                 return Ok("Ocena kategorii została zapisana pomyślnie.");
@@ -45,6 +38,7 @@ public class RatingController : ControllerBase
         }
     }
 
+
     [ServiceFilter(typeof(LobbyAuthorizationFilter))]
     [Authorize]
     [HttpGet("summary/{lobbyId}")]
@@ -52,7 +46,7 @@ public class RatingController : ControllerBase
     {
         try
         {
-            var summary = await _ratingService.GetLobbyRatingsSummary(lobbyId);
+            var summary = await ratingService.GetLobbyRatingsSummary(lobbyId);
             return Ok(summary);
         }
         catch (InvalidOperationException ex)

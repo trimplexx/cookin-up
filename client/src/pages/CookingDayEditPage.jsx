@@ -61,25 +61,28 @@ const CookingDayEditPage = () => {
       setIsLoading(true);
 
       const updatedDishes = await Promise.all(
-        dishes.map(async ({ id, name, image, mealCategoryName }) => {
-          let base64Image = null;
+        dishes.map(
+          async ({ id, name, image, mealCategoryName, originalImage }) => {
+            let base64Image = null;
 
-          if (image instanceof File) {
-            base64Image = await convertToBase64(image);
-          } else if (
-            typeof image === 'string' &&
-            image.startsWith('data:image')
-          ) {
-            base64Image = image.split(',')[1];
+            if (image instanceof File) {
+              base64Image = await convertToBase64(image);
+            } else if (
+              typeof image === 'string' &&
+              image.startsWith('data:image') &&
+              image !== originalImage
+            ) {
+              base64Image = image.split(',')[1];
+            }
+
+            return {
+              id,
+              name: name || null,
+              image: base64Image,
+              mealCategoryName: mealCategoryName || null,
+            };
           }
-
-          return {
-            id,
-            name: name || null,
-            image: base64Image,
-            mealCategoryName: mealCategoryName || null,
-          };
-        })
+        )
       );
 
       const updateData = {

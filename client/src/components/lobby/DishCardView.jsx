@@ -3,13 +3,23 @@ import { FaStar } from 'react-icons/fa';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
 
-const DishCardView = ({ dish, mealCategoryId, onRate, initialRating }) => {
+const DishCardView = ({
+  dish,
+  mealCategoryId,
+  onRate,
+  initialRating,
+  initialComment,
+}) => {
   const [rating, setRating] = useState(initialRating);
   const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState(initialComment || '');
 
   const handleRating = (newRating) => {
     setRating(newRating);
-    onRate(mealCategoryId, newRating, 'meal');
+  };
+
+  const handleSubmit = () => {
+    onRate(mealCategoryId, rating, 'meal', comment);
   };
 
   return (
@@ -45,6 +55,20 @@ const DishCardView = ({ dish, mealCategoryId, onRate, initialRating }) => {
           );
         })}
       </div>
+
+      <textarea
+        className="w-full mt-2 p-2 border border-gray-300 rounded text-neutral-800  dark:bg-neutral-700 dark:text-white"
+        placeholder="Dodaj komentarz..."
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+      ></textarea>
+
+      <button
+        onClick={handleSubmit}
+        className="mt-2 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+      >
+        Wyślij ocenę i komentarz za danie
+      </button>
     </div>
   );
 };
@@ -59,6 +83,7 @@ DishCardView.propTypes = {
   mealCategoryId: PropTypes.number.isRequired,
   onRate: PropTypes.func.isRequired,
   initialRating: PropTypes.number.isRequired,
+  initialComment: PropTypes.string,
 };
 
 export default DishCardView;
